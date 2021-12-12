@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# Generate a random flag
+generate-flag --output /task/student/flag.txt
+
+# Generate the challenge code
+python3 /task/student/scripts/complete_template.py
+# Disable ASLR
+echo 0 > /proc/sys/kernel/randomize_va_space
+# Compile the challenge
+gcc /task/student/challenge_to_compile.c -O0 -o /task/student/challenge -fno-stack-protector
+# Set the UID bit
+chmod u+s /task/student/challenge
+# Remove the non edited version of the code
+rm /task/student/challenge_to_compile.c
+
+ssh_student
+
+check-flag --student-flag-path /task/student/answer.txt --correct-flag-path /task/student/flag.txt

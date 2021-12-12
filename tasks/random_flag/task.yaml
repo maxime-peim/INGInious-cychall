@@ -1,0 +1,29 @@
+accessible: true
+author: ''
+categories: []
+contact_url: ''
+context: |-
+    Random flag generation thru the webapp random generator.
+    The format for the flag is the following `INGInious{[a-z0-9]{64}}`, place the answer in `student/answer.txt`.
+environment_id: default
+environment_parameters:
+    limits:
+        time: '30'
+        hard_time: ''
+        memory: '100'
+    network_grading: 'on'
+    ssh_allowed: 'on'
+    run_cmd: ''
+environment_type: docker
+evaluate: best
+file: ''
+groups: false
+input_random: '0'
+name: Random Flag from webapp
+network_grading: false
+problems: {}
+stored_submissions: 0
+submission_limit:
+    amount: -1
+    period: -1
+weight: 1.0

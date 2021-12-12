@@ -1,0 +1,33 @@
+accessible: true
+name: Thesis
+description: ''
+admins: []
+tutors: []
+groups_student_choice: true
+allow_unregister: true
+allow_preview: true
+registration: true
+registration_password: null
+registration_ac: null
+registration_ac_list:
+- '    '
+is_lti: false
+lti_url: ''
+lti_keys: {}
+lti_send_back_grade: false
+task_dispenser: toc
+dispenser_data:
+-   config:
+        closed: false
+    id: general
+    rank: 0
+    tasks_list:
+        random_flag: 0
+    title: General
+-   config:
+        closed: false
+    id: random_flag
+    rank: 1
+    tasks_list:
+        basic_buffer_overflow: 0
+    title: Binary exploitation

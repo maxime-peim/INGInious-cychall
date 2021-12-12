@@ -1,0 +1,16 @@
+#!/bin/bash
+
+sha256flag="INGInious{$(echo '$RANDOM' | sha256sum | cut -d ' ' -f 1)}"
+echo "$sha256flag" > student/flag.txt
+ssh_student
+
+if [ -f /task/student/answer.txt ]; then
+	studentflag=$(cat /task/student/answer.txt)
+	if [ "$studentflag" = "$sha256flag" ]; then
+		feedback-result success
+	else
+		feedback-result failed
+	fi
+else
+	feedback-result failed
+fi
