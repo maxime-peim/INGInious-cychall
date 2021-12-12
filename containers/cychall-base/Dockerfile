@@ -1,7 +1,7 @@
 # DOCKER-VERSION 1.1.0
 
 ARG   VERSION=latest
-FROM  ingi/inginious-c-base
+FROM  ingi/inginious-c-base:${VERSION}
 LABEL org.inginious.grading.name="cychall-base"
 
 ADD     . /INGInious-cychall
