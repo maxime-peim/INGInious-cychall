@@ -1,13 +1,13 @@
 import os
 import hashlib
 
+from randomness import Random
+
 def generate_flag(prefix='INGInious', size=16):
     """
         Return a random flag with the given prefix.
     """
-    randomness = os.urandom(size)
-    flag_intern = hashlib.sha256(randomness).hexdigest()
-    return f'{prefix}{{{flag_intern}}}'
+    return f'{prefix}{{{Random.generate("hash")}}}'
 
 def write_flag(flag, flag_path, student_read=False):
     o_flags = os.O_CREAT | os.O_WRONLY

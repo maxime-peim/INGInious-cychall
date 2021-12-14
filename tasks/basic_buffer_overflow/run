@@ -7,12 +7,14 @@ generate-flag --output /task/student/flag.txt
 python3 /task/student/scripts/complete_template.py
 # Disable ASLR
 echo 0 > /proc/sys/kernel/randomize_va_space
-# Compile the challenge
-gcc /task/student/challenge_to_compile.c -O0 -o /task/student/challenge -fno-stack-protector
+
+# Parse the template and compile the challenge
+parse-template /task/student/scripts/template.c \
+            -c "gcc /task/student/challenge.c -O0 -o /task/student/challenge -fno-stack-protector" \
+            -o /task/student/challenge.c
+
 # Set the UID bit
 chmod u+s /task/student/challenge
-# Remove the non edited version of the code
-rm /task/student/challenge_to_compile.c
 
 ssh_student
 

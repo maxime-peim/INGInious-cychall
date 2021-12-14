@@ -3,13 +3,13 @@
 
 int main()
 {
-    char buffer[%buffer_size%];
+    char buffer[@buffer_size = random_integer(low=100,high=500)@];
     int pass = 0;
 
     printf("\n Enter the password : \n");
     gets(buffer);
 
-    if(strcmp(buffer, "%hidden_random_string%"))
+    if(strcmp(buffer, "@hidden_password = random_hash(hash_name='md5')@"))
     {
         printf ("\n Wrong Password \n");
     }
