@@ -3,8 +3,6 @@
 # Generate a random flag
 generate-flag --output /task/student/flag.txt
 
-# Generate the challenge code
-python3 /task/student/scripts/complete_template.py
 # Disable ASLR
 echo 0 > /proc/sys/kernel/randomize_va_space
 
