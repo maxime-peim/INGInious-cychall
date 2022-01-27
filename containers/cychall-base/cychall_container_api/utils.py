@@ -1,4 +1,8 @@
 import os
+import sys
+import subprocess
+import shlex
+import grp
 import hashlib
 
 from randomness import Random
@@ -30,4 +34,46 @@ def extract_value(direct_value, value_path):
             return fin.read()
     except OSError:
         sys.stderr.buffer.write(b'Cannot read value from file.')
+        sys.exit(2)
+
+def execute_command(command_name, options):
+    process = subprocess.run([command_name, *shlex.split(options)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    return process
+
+
+def create_user(name, uid=None, gid=None, home_dir=None):
+    options = [name]
+
+    if gid is not None:
+        options.append(f'--gid {gid}')
+
+    groupadd_proc = execute_command('groupadd', ' '.join(options))
+
+    if groupadd_proc.returncode != 0:
+        sys.stderr.buffer.write(b'An error occured while adding a new user group:\n')
+        sys.stderr.buffer.write(groupadd_proc.stderr)
+        sys.exit(2)
+
+    # add group name
+    options.append(f'-g {name}')
+
+    if uid is not None:
+        options.append(f'--uid {uid}')
+
+    if home_dir is None:
+        home_dir = f'/task/student/{name}'
+        try:
+            os.makedirs(home_dir)
+        except OSError as e:
+            sys.stderr.buffer.write(b'An error occured while adding a new user:\n')
+            sys.stderr.buffer.write(str(e).encode())
+            sys.exit(2)
+
+    options.append(f'--home-dir {home_dir}')
+
+    useradd_proc = execute_command('useradd', ' '.join(options))
+
+    if useradd_proc.returncode != 0:
+        sys.stderr.buffer.write(b'An error occured while adding a new user:\n')
+        sys.stderr.buffer.write(useradd_proc.stderr)
         sys.exit(2)

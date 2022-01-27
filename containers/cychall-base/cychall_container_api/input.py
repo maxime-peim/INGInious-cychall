@@ -126,11 +126,11 @@ def parse_template(input_filename, output_filename='', command=''):
     with open(output_filename, 'wb') as file:
         file.write(intermediary_template.encode("utf-8"))
 
-    if need_intermediary_step:
+    if need_intermediary_step or command != '':
         if not command:
             raise Exception('Cannot hide values if there is no intermediary step.')
         
-        p = subprocess.Popen(shlex.split(command), bufsize=0, preexec_fn=lambda: set_limits_user('root'), stdin=subprocess.PIPE,
+        p = subprocess.run(shlex.split(command), bufsize=0, stdin=subprocess.PIPE,
                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         retval = p.wait()
 
