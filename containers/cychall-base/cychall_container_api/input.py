@@ -111,10 +111,10 @@ def parse_template(input_filename, output_filename='', command=''):
         need_intermediary_step |= var.is_hidden
         changes_to_make.append((match.start(), match.end(), str(var), var.is_hidden))
 
-    intermediary_template = finale_template = template
+    intermediary_template = final_template = template
     for start, end, replacement, hidden in changes_to_make[::-1]:
         intermediary_template = intermediary_template[:start] + replacement + intermediary_template[end:]
-        finale_template = finale_template[:start] + ('--- EDITED ---' if hidden else replacement) + finale_template[end:]
+        final_template = final_template[:start] + ('--- EDITED ---' if hidden else replacement) + final_template[end:]
     
     # Ensure directory of resulting file exists
     try:
@@ -127,14 +127,13 @@ def parse_template(input_filename, output_filename='', command=''):
         file.write(intermediary_template.encode("utf-8"))
 
     if need_intermediary_step or command != '':
-        if not command:
+        if need_intermediary_step and not command:
             raise Exception('Cannot hide values if there is no intermediary step.')
         
         p = subprocess.run(shlex.split(command), bufsize=0, stdin=subprocess.PIPE,
                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        retval = p.wait()
 
         with open(output_filename, 'wb') as file:
-            file.write(finale_template.encode("utf-8"))
+            file.write(final_template.encode("utf-8"))
 
 
