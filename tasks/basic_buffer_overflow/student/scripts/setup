@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# Create some other users
+create-user user1
+create-user user2
+
+# Generate a random flag
+generate-flag --output /task/student/flag.txt
+
+# Parse the template and compile the challenge
+parse-template /task/student/scripts/template.c \
+            -c "gcc /task/student/challenge.c -O0 -o /task/student/challenge -fno-stack-protector" \
+            -o /task/student/challenge.c
+
+# Disable ASLR (not working for the moment, Read-Only file system error)
+echo 0 | tee /proc/sys/kernel/randomize_va_space
+
+# Set owners
+chmod u+s /task/student/challenge
