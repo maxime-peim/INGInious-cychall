@@ -26,8 +26,9 @@ dispenser_data:
     title: General
 -   config:
         closed: false
-    id: random_flag
+    id: bin_expl
     rank: 1
     tasks_list:
         basic_buffer_overflow: 0
+        stack_based_ret2stack: 0
     title: Binary exploitation

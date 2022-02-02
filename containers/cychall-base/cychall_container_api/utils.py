@@ -36,8 +36,8 @@ def extract_value(direct_value, value_path):
         sys.stderr.buffer.write(b'Cannot read value from file.')
         sys.exit(2)
 
-def execute_command(command_name, options):
-    process = subprocess.run([command_name, *shlex.split(options)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+def execute_command(command_name, options=None):
+    process = subprocess.run([command_name, *shlex.split(options or {})], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     return process
 
 
@@ -54,20 +54,21 @@ def create_user(name, uid=None, gid=None, home_dir=None):
         sys.stderr.buffer.write(groupadd_proc.stderr)
         sys.exit(2)
 
+
     # add group name
     options.append(f'-g {name}')
 
     if uid is not None:
         options.append(f'--uid {uid}')
 
-    if home_dir is None:
-        home_dir = f'/task/student/{name}'
-        try:
-            os.makedirs(home_dir)
-        except OSError as e:
-            sys.stderr.buffer.write(b'An error occured while adding a new user:\n')
-            sys.stderr.buffer.write(str(e).encode())
-            sys.exit(2)
+    home_dir = home_dir or f'/task/student/{name}'
+    
+    try:
+        os.makedirs(home_dir)
+    except OSError as e:
+        sys.stderr.buffer.write(b'An error occured while adding a new user:\n')
+        sys.stderr.buffer.write(str(e).encode())
+        sys.exit(2)
 
     options.append(f'--home-dir {home_dir}')
 
@@ -77,3 +78,5 @@ def create_user(name, uid=None, gid=None, home_dir=None):
         sys.stderr.buffer.write(b'An error occured while adding a new user:\n')
         sys.stderr.buffer.write(useradd_proc.stderr)
         sys.exit(2)
+
+    execute_command(f'usermod -a -G worker {name}')

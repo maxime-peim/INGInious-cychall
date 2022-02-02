@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
 
 int main()
 {
@@ -21,8 +23,8 @@ int main()
 
     if(pass)
     {
-        setreuid(0, 0);
-        system("cat /task/student/flag.txt");
+        setreuid(geteuid(), geteuid());
+        system("cat /challenge/step1/flag.txt");
     }
 
     return 0;

@@ -3,4 +3,4 @@
 # Configuration has to be done directly onto the student container
 ssh_student --script-as-root --setup-script "bash -c student/scripts/setup"
 
-check-flag --student-flag-path /task/student/answer.txt --correct-flag-path /task/student/flag.txt
+check-flag --student-flag-path /task/student/answer.txt --correct-flag-path /challenge/step1/flag.txt

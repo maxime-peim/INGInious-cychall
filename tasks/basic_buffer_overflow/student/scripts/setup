@@ -1,19 +1,30 @@
 #!/bin/bash
 
 # Create some other users
-create-user user1
-create-user user2
+create-user step1 --home-dir /challenge/step1
 
 # Generate a random flag
-generate-flag --output /task/student/flag.txt
+generate-flag --output /challenge/step1/flag.txt
 
 # Parse the template and compile the challenge
 parse-template /task/student/scripts/template.c \
-            -c "gcc /task/student/challenge.c -O0 -o /task/student/challenge -fno-stack-protector" \
-            -o /task/student/challenge.c
+            -c "gcc /challenge/step1/challenge.c -Wall -o /challenge/step1/challenge -fno-stack-protector" \
+            -o /challenge/step1/challenge.c
 
-# Disable ASLR (not working for the moment, Read-Only file system error)
-echo 0 | tee /proc/sys/kernel/randomize_va_space
+# Disable ASLR
+# For the moment does not work
+# We need a privileged container to modify the value
+# even on kata that has its own kernel.
+# However, there is maybe some workaround possible.
+# https://github.com/kata-containers/runtime/issues/1568
+# https://github.com/docker-library/docker/pull/191
+# echo 0 > /proc/sys/kernel/randomize_va_space
 
 # Set owners
-chmod u+s /task/student/challenge
+
+chown step1:worker -R /challenge/step1
+chmod 550 /challenge/step1
+chmod 400 /challenge/step1/flag.txt
+chmod 440 /challenge/step1/challenge.c
+chmod 550 /challenge/step1/challenge
+chmod u+s /challenge/step1/challenge
