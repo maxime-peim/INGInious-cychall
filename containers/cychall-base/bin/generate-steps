@@ -12,6 +12,7 @@ import shutil
 import argparse
 import cychall_container_api.steps
 import cychall_container_api.utils
+import cychall_container_api.flag
 import inginious_container_api.utils
 
 parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, description='Generate a flag and place it in a file.\n')
@@ -73,10 +74,16 @@ try:
     cychall_container_api.utils.create_user("end", home_dir=end_folder)
     
     step_uid = pwd.getpwnam("end").pw_uid
+    previous_uid = pwd.getpwnam(usernames[-1]).pw_uid
     previous_gid = grp.getgrnam(usernames[-1]).gr_gid
+
+    flag = cychall_container_api.flag.generate_flag()
+    flag_path = os.path.join(end_folder, "flag")
+    cychall_container_api.flag.write_flag(flag, flag_path)
 
     os.chmod(end_folder, 0o550)
     os.chown(end_folder, step_uid, previous_gid)
+    os.chown(flag_path, previous_uid, previous_gid)
 
         
 except FileNotFoundError as file_nf:
