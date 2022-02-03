@@ -4,22 +4,9 @@ import subprocess
 import shlex
 import grp
 import hashlib
+import pwd
 
-from randomness import Random
-
-def generate_flag(prefix='INGInious', size=16):
-    """
-        Return a random flag with the given prefix.
-    """
-    return f'{prefix}{{{Random.generate("hash")}}}'
-
-def write_flag(flag, flag_path, student_read=False):
-    o_flags = os.O_CREAT | os.O_WRONLY
-    mode = 0o644 if student_read else 0o640
-    fd = os.open(flag_path, o_flags, mode)
-    
-    with os.fdopen(fd, 'w') as flag_out:
-        flag_out.write(flag)
+import inginious_container_api.utils
 
 def extract_value(direct_value, value_path):
     if direct_value is not None:
@@ -36,47 +23,74 @@ def extract_value(direct_value, value_path):
         sys.stderr.buffer.write(b'Cannot read value from file.')
         sys.exit(2)
 
-def execute_command(command_name, options=None):
-    process = subprocess.run([command_name, *shlex.split(options or {})], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    return process
 
-
-def create_user(name, uid=None, gid=None, home_dir=None):
+def create_user(name, uid=None, gid=None, home_dir=None, groups=None):
     options = [name]
 
+    # create a new group for the user, with the name of the user
     if gid is not None:
-        options.append(f'--gid {gid}')
+        options.append('--gid')
+        options.append(str(gid))
 
-    groupadd_proc = execute_command('groupadd', ' '.join(options))
+    stdout, stderr = inginious_container_api.utils.execute_process(['groupadd', *options], internal_command=True)
 
-    if groupadd_proc.returncode != 0:
-        sys.stderr.buffer.write(b'An error occured while adding a new user group:\n')
-        sys.stderr.buffer.write(groupadd_proc.stderr)
-        sys.exit(2)
-
+    # if stderr != "":
+    #     sys.stderr.buffer.write(b'An error occured while adding a new user group:\n')
+    #     sys.stderr.buffer.write(stderr)
+    #     sys.exit(2)
 
     # add group name
-    options.append(f'-g {name}')
+    options.append('-g')
+    options.append(name)
 
+    # create the new user, in his own group
     if uid is not None:
-        options.append(f'--uid {uid}')
+        options.append('--uid')
+        options.append(str(uid))
 
     home_dir = home_dir or f'/task/student/{name}'
     
     try:
-        os.makedirs(home_dir)
+        os.makedirs(home_dir, exist_ok=True)
     except OSError as e:
         sys.stderr.buffer.write(b'An error occured while adding a new user:\n')
         sys.stderr.buffer.write(str(e).encode())
         sys.exit(2)
 
-    options.append(f'--home-dir {home_dir}')
+    options.append('--home-dir')
+    options.append(home_dir)
 
-    useradd_proc = execute_command('useradd', ' '.join(options))
+    stdout, stderr = inginious_container_api.utils.execute_process(['useradd', *options], internal_command=True)
 
-    if useradd_proc.returncode != 0:
-        sys.stderr.buffer.write(b'An error occured while adding a new user:\n')
-        sys.stderr.buffer.write(useradd_proc.stderr)
-        sys.exit(2)
+    # if stderr != "":
+    #     sys.stderr.buffer.write(b'An error occured while adding a new user:\n')
+    #     sys.stderr.buffer.write(stderr)
+    #     sys.exit(2)
 
-    execute_command(f'usermod -a -G worker {name}')
+    if groups is not None:
+        # and add the new user to additional groups
+        inginious_container_api.utils.execute_process(['usermod', '-a', '-G', *groups, name], internal_command=True)
+
+
+def get_directory_content(path):
+    """
+        Return the content of a directory.
+    """
+    if not os.path.isdir(path):
+        return []
+    return os.listdir(path)
+
+
+def get_username():
+    return pwd.getpwuid(os.getuid()).pw_name
+
+
+def remove_files(paths):
+    for path in paths:
+        try:
+            if os.path.isdir(path):
+                os.rmdir(path)
+            else:
+                os.remove(path)
+        except FileNotFoundError:
+            continue

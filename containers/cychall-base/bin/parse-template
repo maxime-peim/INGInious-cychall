@@ -26,7 +26,7 @@ infile = args.input
 try:
     cychall_container_api.input.parse_template(infile, outfile, command)
 except IOError as e:
-    sys.stderr.write("Input file not found")
+    sys.stderr.write("Error: " + str(e))
     sys.exit(2)
 except ValueError as e:
     sys.stderr.write("Input is not compatible")

@@ -24,7 +24,7 @@ int main()
     if(pass)
     {
         setreuid(geteuid(), geteuid());
-        system("cat /challenge/step1/flag.txt");
+        system("/bin/sh");
     }
 
     return 0;

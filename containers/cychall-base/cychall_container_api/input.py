@@ -3,8 +3,9 @@ import re
 import subprocess
 import shlex
 
+import inginious_container_api.utils
+import utils
 from randomness import Random
-from inginious_container_api.utils import set_limits_user
 
 class Environment:
 
@@ -86,6 +87,7 @@ def parse_template(input_filename, output_filename='', command=''):
         input_filename: file to parse
         output_filename: if not specified, overwrite input file
     """
+    
     with open(input_filename, 'rb') as file:
         template = file.read().decode("utf-8")
 
@@ -129,11 +131,8 @@ def parse_template(input_filename, output_filename='', command=''):
     if need_intermediary_step or command != '':
         if need_intermediary_step and not command:
             raise Exception('Cannot hide values if there is no intermediary step.')
-        
-        p = subprocess.run(shlex.split(command), bufsize=0, stdin=subprocess.PIPE,
-                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        stdout, stderr = inginious_container_api.utils.execute_process(shlex.split(command), internal_command=True, cwd=os.getcwd())
 
         with open(output_filename, 'wb') as file:
             file.write(final_template.encode("utf-8"))
-
-

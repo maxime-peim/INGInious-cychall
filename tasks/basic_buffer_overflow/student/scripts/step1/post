@@ -1,0 +1,4 @@
+#!/bin/bash
+
+chmod 440 challenge.c
+chmod 550 challenge

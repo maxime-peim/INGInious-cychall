@@ -1,0 +1,92 @@
+#!/bin/python3
+# -*- coding: utf-8 -*-
+#
+# This file is part of INGInious. See the LICENSE and the COPYRIGHTS files for
+# more information about the licensing of this file.
+
+import os
+import sys
+import pwd
+import grp
+import shutil
+import argparse
+import cychall_container_api.steps
+import cychall_container_api.utils
+import inginious_container_api.utils
+
+parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, description='Generate a flag and place it in a file.\n')
+parser.add_argument('--output-dir', help="Where to generate the steps.", type=str, default="/challenge")
+parser.add_argument('--input-dir', help="Where are the setup scripts for the steps.", type=str, default="/task/student/scripts")
+args = parser.parse_args()
+
+
+current_user = cychall_container_api.utils.get_username()
+number_of_steps = cychall_container_api.steps.count_steps(args.input_dir)
+
+usernames = ["worker"] + [f"step{i}" for i in range(1, number_of_steps + 1)]
+
+try:
+    for step_i in range(1, number_of_steps + 1):
+        # get the current user name and scripts source and destination
+        username = usernames[step_i]
+        src = os.path.join(args.input_dir, username)
+        dst = os.path.join(args.output_dir, username)
+
+        if not os.path.exists(src):
+            raise FileNotFoundError(f"Step {step_i} folder does not exist.")
+
+        # copy the sources to build the challenge
+        shutil.copytree(src, dst)
+        # create the user
+        cychall_container_api.utils.create_user(username, home_dir=dst)
+
+        # save the paths to the source files in order to remove them afterward
+        setup_files = [os.path.join(dst, p) for p in os.listdir(src)]
+        # build the challenge
+        inginious_container_api.utils.execute_process(os.path.join(dst, "setup"), user=current_user, cwd=dst)
+
+        # set the rights on each files
+        # the current user has group rights
+        # and the next user has owner rights
+        step_uid = pwd.getpwnam(username).pw_uid
+        previous_gid = grp.getgrnam(usernames[step_i - 1]).gr_gid
+
+        os.chmod(dst, 0o550)
+        os.chown(dst, step_uid, previous_gid)
+        for root, dirs, files in os.walk(dst):
+            for momo in dirs + files:
+                fullpath = os.path.join(root, momo)
+                if fullpath not in setup_files:
+                    os.chown(os.path.join(root, momo), step_uid, previous_gid)
+
+        # if there is some specific rights or other to be given afterward
+        inginious_container_api.utils.execute_process(os.path.join(dst, "post"), user=current_user, cwd=dst)
+        # remove all building files
+        cychall_container_api.utils.remove_files(setup_files)
+        # give full executive rights on the challenge for the current user
+        # so after exploitation uid and gid are set to the next user
+        # TODO: improve
+        cychall_container_api.steps.add_sudoers_nopasswd(username, usernames[step_i - 1], command=os.path.join(dst, "challenge"))
+
+    # create an end folder and user, where the student will get the flag
+    end_folder = os.path.join(args.output_dir, "end")
+    cychall_container_api.utils.create_user("end", home_dir=end_folder)
+    
+    step_uid = pwd.getpwnam("end").pw_uid
+    previous_gid = grp.getgrnam(usernames[-1]).gr_gid
+
+    os.chmod(end_folder, 0o550)
+    os.chown(end_folder, step_uid, previous_gid)
+
+        
+except FileNotFoundError as file_nf:
+    sys.stderr.buffer.write(b'Error while copying a step content : \n' + str(file_nf).encode())
+    sys.exit(2)
+
+except FileExistsError:
+    sys.stderr.buffer.write(b'Error while creating step folders, one folder already exists in the output directory.')
+    sys.exit(2)
+
+except shutil.Error:
+    sys.stderr.buffer.write(b'Error while copying a step content.')
+    sys.exit(2)
