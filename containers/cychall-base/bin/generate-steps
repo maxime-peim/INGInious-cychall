@@ -20,8 +20,9 @@ parser.add_argument('--output-dir', help="Where to generate the steps.", type=st
 parser.add_argument('--input-dir', help="Where are the setup scripts for the steps.", type=str, default="/task/student/scripts")
 args = parser.parse_args()
 
-
+# get the current user with which the script is running
 current_user = cychall_container_api.utils.get_username()
+# count the number of steps
 number_of_steps = cychall_container_api.steps.count_steps(args.input_dir)
 
 try:
@@ -29,6 +30,7 @@ try:
     end_folder = os.path.join(args.output_dir, "end")
     cychall_container_api.utils.create_user("end", home_dir=end_folder, groups=["worker"])
 
+    # set rights on the folder and the flag
     end_user = pwd.getpwnam("end")
     end_uid = end_user.pw_uid
     end_gid = end_user.pw_gid
@@ -42,23 +44,26 @@ try:
     os.chown(end_folder, end_uid, nogroup_gid)
     os.chown(flag_path, end_uid, end_gid)
 
+    # generate each step
     for stepi in range(number_of_steps, 0, -1):
         # get the current user name and scripts source and destination
         username = f"step{stepi}"
         src = os.path.join(args.input_dir, username)
         dst = os.path.join(args.output_dir, username)
 
+        # if there is a missing step, advertise
         if not os.path.exists(src):
             raise FileNotFoundError(f"Step {stepi} folder does not exist.")
 
         # copy the sources to build the challenge
         shutil.copytree(src, dst)
-        # create the user
+        # create the user, he will be inside the worker group
         cychall_container_api.utils.create_user(username, groups=["worker"])
 
         # save the paths to the source files in order to remove them afterward
         setup_files = [os.path.join(dst, p) for p in os.listdir(src)]
         # build the challenge
+        # TODO: enable other setup file name
         inginious_container_api.utils.execute_process(os.path.join(dst, "setup"), user=current_user, cwd=dst)
 
         # set the rights on each files
@@ -77,10 +82,12 @@ try:
                     os.chown(os.path.join(root, momo), step_uid, 4242)
 
         # if there is some specific rights or other to be given afterward
+        # TODO: enable other post file name
         inginious_container_api.utils.execute_process(os.path.join(dst, "post"), user=current_user, cwd=dst)
         # remove all building files
         cychall_container_api.utils.remove_files(setup_files)
 
+    # set the rights to the output directory to 770 so all step users can access their folder
     cychall_container_api.steps.fix_output_directory_permissions(args.output_dir)
         
 except FileNotFoundError as file_nf:
