@@ -24,31 +24,29 @@ def extract_value(direct_value, value_path):
         sys.exit(2)
 
 
-def create_user(name, uid=None, gid=None, home_dir=None, groups=None):
+def create_user(name, uid=None, gid=None, home_dir=None, groups=None, create_group=False):
+    create_group |= groups is None
     options = [name]
 
     # create a new group for the user, with the name of the user
-    if gid is not None:
-        options.append('--gid')
-        options.append(str(gid))
-
-    stdout, stderr = inginious_container_api.utils.execute_process(['groupadd', *options], internal_command=True)
+    if gid is not None or create_group:
+        groupadd_options = [] if gid is None else ['--gid', str(gid)]
+        options += ['-g', name]
+        stdout, stderr = inginious_container_api.utils.execute_process(['groupadd', *groupadd_options, name], internal_command=True)
+    else:
+        options += ['-g', groups[0]]
+        groups.pop()
 
     # if stderr != "":
     #     sys.stderr.buffer.write(b'An error occured while adding a new user group:\n')
     #     sys.stderr.buffer.write(stderr)
     #     sys.exit(2)
 
-    # add group name
-    options.append('-g')
-    options.append(name)
-
     # create the new user, in his own group
     if uid is not None:
-        options.append('--uid')
-        options.append(str(uid))
+        options += ['--uid', str(uid)]
 
-    home_dir = home_dir or f'/task/student/{name}'
+    home_dir = home_dir or f'/task'
     
     try:
         os.makedirs(home_dir, exist_ok=True)
@@ -57,8 +55,7 @@ def create_user(name, uid=None, gid=None, home_dir=None, groups=None):
         sys.stderr.buffer.write(str(e).encode())
         sys.exit(2)
 
-    options.append('--home-dir')
-    options.append(home_dir)
+    options += ['--home-dir', home_dir]
 
     stdout, stderr = inginious_container_api.utils.execute_process(['useradd', *options], internal_command=True)
 
@@ -94,3 +91,15 @@ def remove_files(paths):
                 os.remove(path)
         except FileNotFoundError:
             continue
+
+
+def get_all_parts_path(path):
+    parts = []
+    head, tail = os.path.split(path)
+
+    while head != "" and tail != "":
+        parts.append(tail)
+        head, tail = os.path.split(head)
+    
+    parts.append(head or tail)
+    return parts[::-1]

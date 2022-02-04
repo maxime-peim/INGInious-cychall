@@ -1,6 +1,6 @@
 #!/bin/bash
 
 # Configuration has to be done directly onto the student container
-ssh_student --script-as-root --setup-script "generate-steps"
+ssh_student --user step1 --script-as-root --setup-script "generate-steps"
 
-check-flag --student-flag-path /task/student/answer.txt --correct-flag-path /challenge/end/flag.txt
+check-flag --student-flag-path /task/student/answer.txt --correct-flag-path /task/student/end/flag
