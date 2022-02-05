@@ -6,7 +6,7 @@ LABEL org.inginious.grading.name="cychall-binary"
 
 
 RUN   yum install -y sudo gcc gcc-c++ cpp make cmake valgrind binutils libstdc++ clang clang-analyzer clang-devel llvm automake check check-devel zlib-devel openssl-devel time jansson-devel radare2 \
-      wget which expat-devel gmp-devel mpfr-devel git dnf && \
+      wget which expat-devel gmp-devel mpfr-devel git dnf sqlite sqlite-devel && \
       yum clean all && \
       mkdir /tools
 
