@@ -1,0 +1,9 @@
+#!/bin/bash
+
+chown end:worker challenge
+chmod 440 challenge.c
+chmod 550 challenge
+
+chown end:worker database.db
+
+chmod 770 database.db
