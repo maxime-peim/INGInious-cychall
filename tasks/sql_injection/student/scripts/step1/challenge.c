@@ -6,6 +6,8 @@
 
 #include <sqlite3.h>
 
+static uid_t euid, ruid;
+
 sqlite3* open_database(char* filename)
 {
 	sqlite3* DB;
@@ -43,8 +45,8 @@ int main()
 	char username[40];
 	char password[40];
 	int done = 0;
-	
 	char filename[20] = "database.db";
+	
 	sqlite3* DB = open_database(filename);
 	
 	if (!DB){
@@ -74,6 +76,7 @@ int main()
 	if(done)
 	{
 		setreuid(geteuid(), geteuid());
+		setregid(getegid(), getegid());
 		system("/bin/sh");
 	}
 	
