@@ -1,9 +1,11 @@
 #!/bin/bash
 
+usermod -a -G step1 end
 chown end challenge database.db
 chmod 440 challenge.c
 chmod 400 database.db
 chmod 550 challenge
 chmod u+s challenge
 
-chmod 701 . # challenge owner needs write and execute permissions on database folder to use database
+chown step1:step1 .
+chmod 710 . # challenge owner needs write and execute permissions on database folder to use database

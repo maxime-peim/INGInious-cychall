@@ -58,7 +58,7 @@ try:
         # copy the sources to build the challenge
         shutil.copytree(src, dst)
         # create the user, he will be inside the worker group
-        cychall_container_api.utils.create_user(username, groups=["worker"])
+        cychall_container_api.utils.create_user(username, create_group=True, groups=["worker"])
 
         # save the paths to the source files in order to remove them afterward
         setup_files = [os.path.join(dst, p) for p in os.listdir(src)]
