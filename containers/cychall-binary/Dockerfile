@@ -5,12 +5,12 @@ FROM  ingi/inginious-c-cychall-base:${VERSION}
 LABEL org.inginious.grading.name="cychall-binary"
 
 
-RUN   yum install -y sudo gcc gcc-c++ cpp make cmake valgrind binutils libstdc++ clang clang-analyzer clang-devel llvm automake check check-devel zlib-devel openssl-devel time jansson-devel radare2 \
-      wget which expat-devel gmp-devel mpfr-devel git dnf sqlite sqlite-devel && \
+RUN   yum install -y sudo gdb gcc gcc-c++ cpp make cmake valgrind binutils libstdc++ clang clang-analyzer clang-devel llvm automake check check-devel zlib-devel openssl-devel time jansson-devel radare2 \
+      wget which expat-devel gmp-devel mpfr-devel git dnf nano binutils sqlite sqlite-devel && \
       yum clean all && \
       mkdir /tools
 
-# RUN   python3 -m pip install --upgrade pwntools
+RUN   python3 -m pip install --upgrade pwntools
 
 # ARG   GDB_VERSION=11.1
 # RUN   cd /tools && \

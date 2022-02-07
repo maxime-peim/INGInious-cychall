@@ -1,26 +1,25 @@
 #include <stdio.h>
 #include <string.h>
 
-void check_identity(unsigned int size)
+void check_identity()
 {
-    char buffer[size];
+    char buffer[@buffer_size = random_integer(low=200,high=300)@];
     int approved = 0;
 
-    printf("What is your name: ");
-    gets(buffer);
+    printf("Here is the address of buffer: %p\nWho knows, you might need it.\n", buffer);
 
-    if (strncmp(buffer, "Michael", 7) == 0)
-        approved = 1;
+    printf("What is your name: \n");
+    gets(buffer);
 
     if (approved)
         printf("Welcome Michael! How was your day?\n");
     else
-        printf("Hello %s! Unfortunatly you are not welcome here.", buffer);
+        printf("Hello %s! Unfortunatly you are not welcome here.\n", buffer);
 }
 
 int main()
 {
-    check_identity(@buffer_size = random_integer(low=100,high=500)@);
+    check_identity();
 
     return 0;
 }
