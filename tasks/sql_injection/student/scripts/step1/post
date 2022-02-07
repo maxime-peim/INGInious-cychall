@@ -1,0 +1,14 @@
+#!/bin/bash
+
+chown end:nobody challenge
+chmod 440 challenge.c
+chmod 711 challenge
+chmod g+s challenge
+
+chown end:nobody database.db
+
+chmod 660 database.db
+
+chmod 770 /task/student/end
+chown end:nobody /task/student/end/flag
+chmod 440 /task/student/end/flag
