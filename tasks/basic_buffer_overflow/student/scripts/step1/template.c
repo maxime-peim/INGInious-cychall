@@ -3,6 +3,23 @@
 #include <unistd.h>
 #include <sys/types.h>
 
+void setid()
+{
+	setreuid(geteuid(), geteuid());
+    setregid(getegid(), getegid());
+}
+
+void shell()
+{
+    system("/bin/sh");
+}
+
+void super_shell()
+{
+	setid();
+	shell();
+}
+
 int main()
 {
     char buffer[@buffer_size = random_integer(low=100,high=500)@];
@@ -23,8 +40,7 @@ int main()
 
     if(pass)
     {
-        setreuid(geteuid(), geteuid());
-        system("/bin/sh");
+        super_shell();
     }
 
     return 0;
