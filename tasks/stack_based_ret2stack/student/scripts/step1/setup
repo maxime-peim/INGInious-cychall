@@ -2,7 +2,7 @@
 
 # Parse the template and compile the challenge
 parse-template template.c \
-            -c "gcc challenge.c -Wall -o challenge -fno-stack-protector" \
+            -c "gcc challenge.c -Wall -o challenge -fno-stack-protector -z execstack" \
             -o challenge.c
 
-# need ASLR disabled ...
+# need ASLR disabled ... or give an address on the stack
