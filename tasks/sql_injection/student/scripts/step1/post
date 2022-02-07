@@ -1,12 +1,9 @@
 #!/bin/bash
 
-chown end:worker challenge
+chown end challenge database.db
 chmod 440 challenge.c
-chmod 711 challenge
+chmod 400 database.db
+chmod 550 challenge
 chmod u+s challenge
 
-chown end:worker database.db
-
-chmod 703 . # challenge owner needs write and execute permissions on database folder to use database
-
-chmod 700 database.db
+chmod 701 . # challenge owner needs write and execute permissions on database folder to use database

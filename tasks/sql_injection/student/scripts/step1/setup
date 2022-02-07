@@ -3,6 +3,6 @@
 python3 database_gen.py
 
 # Parse the template and compile the challenge
-gcc challenge.c -Wall -o challenge -l sqlite3
-
-# need ASLR disabled ...
+parse-template template.c \
+            -c "gcc challenge.c -Wall -o challenge -l sqlite3" \
+            -o challenge.c
