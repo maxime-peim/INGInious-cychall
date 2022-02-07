@@ -76,7 +76,6 @@ int main()
 	if(done)
 	{
 		setreuid(geteuid(), geteuid());
-		setregid(getegid(), getegid());
 		system("/bin/sh");
 	}
 	

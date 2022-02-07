@@ -1,14 +1,12 @@
 #!/bin/bash
 
-chown end:nobody challenge
+chown end:worker challenge
 chmod 440 challenge.c
 chmod 711 challenge
-chmod g+s challenge
+chmod u+s challenge
 
-chown end:nobody database.db
+chown end:worker database.db
 
-chmod 660 database.db
+chmod 703 . # challenge owner needs write and execute permissions on database folder to use database
 
-chmod 770 /task/student/end
-chown end:nobody /task/student/end/flag
-chmod 440 /task/student/end/flag
+chmod 700 database.db

@@ -17,7 +17,7 @@ evaluate: best
 file: ''
 groups: false
 input_random: '0'
-name: Simple SQL injection
+name: Simple SQL injection (Login bypass)
 network_grading: false
 problems: {}
 stored_submissions: 0
