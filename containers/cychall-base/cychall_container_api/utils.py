@@ -35,7 +35,7 @@ def create_user(name, uid=None, gid=None, home_dir=None, groups=None, create_gro
         stdout, stderr = inginious_container_api.utils.execute_process(['groupadd', *groupadd_options, name], internal_command=True)
     else:
         options += ['-g', groups[0]]
-        groups.pop()
+        groups.pop(0)
 
     # if stderr != "":
     #     sys.stderr.buffer.write(b'An error occured while adding a new user group:\n')

@@ -26,6 +26,7 @@ current_user = cychall_container_api.utils.get_username()
 number_of_steps = cychall_container_api.steps.count_steps(args.input_dir)
 
 try:
+
     # create an end folder and user, where the student will get the flag
     end_folder = os.path.join(args.output_dir, "end")
     cychall_container_api.utils.create_user("end", home_dir=end_folder, groups=["worker"])
@@ -33,16 +34,14 @@ try:
     # set rights on the folder and the flag
     end_user = pwd.getpwnam("end")
     end_uid = end_user.pw_uid
-    end_gid = end_user.pw_gid
-    nogroup_gid = grp.getgrnam("nobody").gr_gid
 
     flag = cychall_container_api.flag.generate_flag()
     flag_path = os.path.join(end_folder, "flag")
     cychall_container_api.flag.write_flag(flag, flag_path)
 
     os.chmod(end_folder, 0o700)
-    os.chown(end_folder, end_uid, nogroup_gid)
-    os.chown(flag_path, end_uid, end_gid)
+    os.chown(end_folder, end_uid, 4242)
+    os.chown(flag_path, end_uid, 4242)
 
     # generate each step
     for stepi in range(number_of_steps, 0, -1):
@@ -58,7 +57,7 @@ try:
         # copy the sources to build the challenge
         shutil.copytree(src, dst)
         # create the user, he will be inside the worker group
-        cychall_container_api.utils.create_user(username, create_group=True, groups=["worker"])
+        cychall_container_api.utils.create_user(username, groups=["worker"])
 
         # save the paths to the source files in order to remove them afterward
         setup_files = [os.path.join(dst, p) for p in os.listdir(src)]
@@ -71,10 +70,9 @@ try:
         # and the next user has owner rights
         step_user = pwd.getpwnam(username)
         step_uid = step_user.pw_uid
-        nogroup_gid = grp.getgrnam("nobody").gr_gid
 
         os.chmod(dst, 0o700)
-        os.chown(dst, step_uid, nogroup_gid)
+        os.chown(dst, step_uid, 4242)
         for root, dirs, files in os.walk(dst):
             for momo in dirs + files:
                 fullpath = os.path.join(root, momo)
