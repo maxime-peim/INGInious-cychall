@@ -6,98 +6,32 @@
 
 import os
 import sys
-import pwd
-import grp
-import shutil
 import argparse
 import cychall_container_api.steps
-import cychall_container_api.utils
-import cychall_container_api.flag
-import inginious_container_api.utils
+from cychall_container_api.steps import Step, EndStep
 
 parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, description='Generate a flag and place it in a file.\n')
 parser.add_argument('--output-dir', help="Where to generate the steps.", type=str, default="/task/student")
 parser.add_argument('--input-dir', help="Where are the setup scripts for the steps.", type=str, default="/task/student/scripts")
 args = parser.parse_args()
 
-# get the current user with which the script is running
-current_user = cychall_container_api.utils.get_username()
 # count the number of steps
 number_of_steps = cychall_container_api.steps.count_steps(args.input_dir)
 
 try:
-
-    # create an end folder and user, where the student will get the flag
-    end_folder = os.path.join(args.output_dir, "end")
-    cychall_container_api.utils.create_user("end", home_dir=end_folder, groups=["worker"])
-
-    # set rights on the folder and the flag
-    end_user = pwd.getpwnam("end")
-    end_uid = end_user.pw_uid
-
-    flag = cychall_container_api.flag.generate_flag()
-    flag_path = os.path.join(end_folder, "flag")
-    cychall_container_api.flag.write_flag(flag, flag_path)
-
-    os.chmod(end_folder, 0o700)
-    os.chown(end_folder, end_uid, 4242)
-    os.chown(flag_path, end_uid, 4242)
+    # steps and users associated need to be generated from last to first
+    # so user for step_i+1 exists to give permission on building step_i
+    EndStep(args.output_dir).build()
 
     # generate each step
     for stepi in range(number_of_steps, 0, -1):
-        # get the current user name and scripts source and destination
-        username = f"step{stepi}"
-        src = os.path.join(args.input_dir, username)
-        dst = os.path.join(args.output_dir, username)
-
-        # if there is a missing step, advertise
-        if not os.path.exists(src):
-            raise FileNotFoundError(f"Step {stepi} folder does not exist.")
-
-        # copy the sources to build the challenge
-        shutil.copytree(src, dst)
-        # create the user, he will be inside the worker group
-        cychall_container_api.utils.create_user(username, groups=["worker"])
-
-        # save the paths to the source files in order to remove them afterward
-        setup_files = [os.path.join(dst, p) for p in os.listdir(src)]
-        # build the challenge
-        # TODO: enable other setup file name
-        inginious_container_api.utils.execute_process(os.path.join(dst, "setup"), user=current_user, cwd=dst)
-
-        # set the rights on each files
-        # the current user has group rights
-        # and the next user has owner rights
-        step_user = pwd.getpwnam(username)
-        step_uid = step_user.pw_uid
-
-        os.chmod(dst, 0o700)
-        os.chown(dst, step_uid, 4242)
-        for root, dirs, files in os.walk(dst):
-            for momo in dirs + files:
-                fullpath = os.path.join(root, momo)
-                if fullpath not in setup_files:
-                    os.chown(os.path.join(root, momo), step_uid, 4242)
-
-        # if there is some specific rights or other to be given afterward
-        # TODO: enable other post file name
-        inginious_container_api.utils.execute_process(os.path.join(dst, "post"), user=current_user, cwd=dst)
-        # remove all building files
-        cychall_container_api.utils.remove_files(setup_files)
+        Step(f"step{stepi}", args.input_dir, args.output_dir).build()
 
     # set the rights to the output directory to 770 so all step users can access their folder
     cychall_container_api.steps.fix_output_directory_permissions(args.output_dir)
         
-except FileNotFoundError as file_nf:
-    sys.stderr.buffer.write(b'Error while copying a step content : \n' + str(file_nf).encode())
-    sys.exit(2)
-
-except FileExistsError:
-    sys.stderr.buffer.write(b'Error while creating step folders, one folder already exists in the output directory.')
-    sys.exit(2)
-
-except shutil.Error:
-    sys.stderr.buffer.write(b'Error while copying a step content.')
+except cychall_container_api.steps.StepGenerationError as sge:
+    sys.stderr.buffer.write(str(sge).encode())
     sys.exit(2)
 
     
