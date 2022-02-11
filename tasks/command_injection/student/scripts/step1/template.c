@@ -39,7 +39,7 @@ int check_blacklist(char *arr[], char* value, int length)
 int main(int argc, char **argv)
 {
 	char cmd[30] = "ping -c4 ";
-	char ip[16];
+	char ip[20];
 	char *blacklist[] = {"ls", "cat", "sh", "less", "more", "whoami", "echo", "head", "tac", "grep"};
 	int blacklist_length = sizeof(blacklist) / sizeof(*blacklist);
 	printf("Enter an ip to ping: ");

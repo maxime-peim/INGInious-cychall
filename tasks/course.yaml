@@ -32,4 +32,5 @@ dispenser_data:
         basic_buffer_overflow: 0
         stack_based_ret2stack: 0
         sql_injection: 0
+        command_injection: 0
     title: Binary exploitation
