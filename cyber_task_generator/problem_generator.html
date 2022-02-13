@@ -1,0 +1,75 @@
+{# This file is part of INGInious. See the LICENSE and the COPYRIGHTS files for #}
+{# more information about the licensing of this file. #}
+{% extends "layout.html" %}
+
+{% block title %} {{ course.get_name(user_manager.session_language()) }} - {{ _("Task Generator") }} {% endblock %}
+
+{% block column %}
+    {{ template_helper.call('course_admin_menu',course=course,current='task_generator') | safe }}
+{% endblock %}
+
+{% block navbar %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{get_homepath()}}/course/{{course.get_id()}}">{{ course.get_name(user_manager.session_language()) }}</a></li>
+            <li class="breadcrumb-item"><a href="{{get_homepath()}}/admin/{{course.get_id()}}" title="{{ _('Administration') }}" data-toggle="tooltip" data-placement="bottom">
+                <i class="fa fa-user-secret"></i></a></li>
+            <li class="breadcrumb-item active"><a href="#"><i class="fa fa-cog"></i> {{_("Task Generator")}} <span class="sr-only">{{ _("(current)") }}</span></a></li>
+        </ol>
+    </nav>
+{% endblock %}
+
+{% block content %}
+<h2>{{_("Task Generator")}}</h2>
+
+{% if problem_templates %}
+<select id="problem-list" class="custom-select">
+  <option value="placeholder" selected>Select a template</option>
+  {% for template in problem_templates %}
+  		<option value="{{template}}">{{template}}</option>
+  {% endfor %}
+</select>
+<input id="add-problem" class="btn btn-primary" type="button" value="Add">
+
+<form method="post" id="form">
+	<input type="text" placeholder="Task name" name="task-name" required>
+	<ul id='list' class="list-group">
+	</ul>
+	<input id="problems" name="problems" type="hidden" value="" />
+	<button type="submit" class="btn btn-primary">Generate</button>
+</form>
+
+{% else %}
+	<p>No templates found</p>
+{% endif %}
+
+<script>
+$(document).ready(function() {
+	var list = document.getElementById('list');
+	var addBtn = document.getElementById('add-problem');
+	var counter = 0;
+
+	addBtn.addEventListener('click', function(){
+		var value = $("#problem-list").val();
+		if (value !== "placeholder"){
+			list.innerHTML += '<li class="list-group-item">' + $("#problem-list").val() + '</li>';
+			counter += 1;
+		}
+	});
+	
+	$('form').submit(function(event) {
+		var list_values = "";
+		$('#list > li').each(function() {
+			if (list_values === "") {
+				list_values += $(this)[0].innerHTML;
+			} else {
+				list_values += ',' + $(this)[0].innerHTML;
+			}
+		});
+		$("#problems").val(list_values);
+	});
+});
+
+</script>
+
+{% endblock %}

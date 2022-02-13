@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# Parse the template and compile the challenge
+parse-template template.c \
+            -c "gcc challenge.c -Wall -o challenge -fno-stack-protector" \
+            -o challenge.c
+
+# need ASLR disabled ...
