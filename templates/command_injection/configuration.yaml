@@ -1,0 +1,9 @@
+name: Command Injection
+context: 'Blah blah blah'
+difficulties:
+  - Easy
+  - Medium
+  - Hard
+  - Extra-hard
+build_command: ''
+build_script: ''
