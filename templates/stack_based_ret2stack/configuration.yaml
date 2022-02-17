@@ -1,10 +1,9 @@
-name: Command Injection
+name: Stack Based - ret2stack
 front:
   difficulties:
     - Easy
     - Medium
     - Hard
-    - Elite
 back:
   build_command: ''
   build_script: ''

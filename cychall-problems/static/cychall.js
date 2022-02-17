@@ -8,11 +8,27 @@ function load_input_cychall(submissionid, key, input) {
 
 function studio_init_template_cychall(well, pid, problem)
 { 
-    if("exercice" in problem)
-        $('#exercice-' + pid, well).val(problem["exercice"]).change();
+    if("exercice" in problem) {
+        var exercice_selector = $('#exercice-' + pid, well);
+        exercice_selector.val(problem["exercice"]).change();
+
+        studio_update_difficulty();
+        exercice_selector.change(studio_update_difficulty);
+    }
 
     if("difficulty" in problem)
         $('#difficulty-' + pid, well).val(problem["difficulty"]).change();
+
+    if("modify" in problem)
+        $('#modify-' + pid, well).attr("checked", problem["modify"]);
+}
+
+function studio_update_difficulty() {
+    var exercice_id = $('select[id^=exercice] :selected').attr('class');
+    var difficulty_selector = $('select[id^=difficulty]');
+    $('option', difficulty_selector).hide();
+    difficulty_selector.val([]);
+    $('option.' + exercice_id, difficulty_selector).show();
 }
 
 function load_feedback_cychall(key, content) {

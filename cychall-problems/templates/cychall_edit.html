@@ -5,9 +5,9 @@
     <label for="exercice-PID" class="col-sm-2 control-label">Exercice</label>
     <div class="col-sm-10">
         <select type="text" class="form-control" id="exercice-PID" name="problem[PID][exercice]">
-            {% for full_path, exercice_name in exercice_templates %}
-                <option value="{{ full_path }}">
-                    {{ exercice_name }}
+            {% for config in exercices_config %}
+                <option value="{{ config['__path'] }}" class="exercice-{{ config['__id'] }}">
+                    {{ config.get('name', config['__folder']) }}
                 </option>
             {% endfor %}
         </select>
@@ -23,9 +23,24 @@
     <label for="difficulty-PID" class="col-sm-2 control-label">Difficulty</label>
     <div class="col-sm-10">
         <select type="text" class="form-control" id="difficulty-PID" name="problem[PID][difficulty]">
-            <option value="easy">Easy</option>
-            <option value="medium">Medium</option>
-            <option value="hard">Hard</option>
+            {% for config in exercices_config %}
+                {% set difficulties = config.get('front', {}).get('difficulties', []) %}
+                {% for difficulty in difficulties %}
+                    <option value="{{ difficulty }}" class="exercice-{{ config['__id'] }}">
+                        {{ difficulty }}
+                    </option>
+                {% endfor %}
+            {% endfor %}
         </select>
+    </div>
+</div>
+<div class="form-group row">
+    <label for="modify-PID" class="col-sm-3 control-label">Modify challenge content</label>
+    <div class="col-sm-9">
+        <div class="checkbox">
+            <label>
+                <input id="modify-PID" name="problem[PID][modify]" type="checkbox">
+            </label>
+        </div>
     </div>
 </div>
