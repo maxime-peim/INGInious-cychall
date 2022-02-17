@@ -5,10 +5,13 @@
     <label for="exercice-PID" class="col-sm-2 control-label">Exercice</label>
     <div class="col-sm-10">
         <select type="text" class="form-control" id="exercice-PID" name="problem[PID][exercice]">
-            {% for full_path, exercice_name in exercice_templates %}
-                <option value="{{ full_path }}">
-                    {{ exercice_name }}
-                </option>
+            {% for group, templates in exercise_templates.items() %}
+            	<option disabled>{{group|capitalize}} templates</option>
+				{% for full_path, exercice_name in templates %}
+					<option value="{{ full_path }}">
+						{{ exercice_name }}
+					</option>
+				{% endfor %}
             {% endfor %}
         </select>
     </div>

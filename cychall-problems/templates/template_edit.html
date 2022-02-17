@@ -1,0 +1,68 @@
+{# This file is part of INGInious. See the LICENSE and the COPYRIGHTS files for #}
+{# more information about the licensing of this file. #}
+
+{% extends "layout.html" %}
+
+{% block title %}{{ _("Edit template {}").format(templateid) }}{% endblock %}
+
+{% block column %}
+    {{ template_helper.call('course_admin_menu',course=course,current='templates') | safe }}
+{% endblock %}
+
+{% block navbar %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{get_homepath()}}/course/{{course.get_id()}}">{{course.get_name(user_manager.session_language())}}</a></li>
+            <li class="breadcrumb-item"><a href="{{get_homepath()}}/admin/{{course.get_id()}}" title="{{ _('Administration') }}" data-toggle="tooltip" data-placement="bottom">
+                <i class="fa fa-user-secret"></i></a></li>
+            <li class="breadcrumb-item"><a href="{{get_homepath()}}/admin/{{course.get_id()}}/templates" title="{{ _('Templates') }}" data-toggle="tooltip" data-placement="bottom">
+                <i class="fa fa-tasks"></i></a></li>
+            <li class="breadcrumb-item active"><a href="#">{{ _("Edit template \"{}\"").format(templateid) }} <span class="sr-only">{{ _("(current)") }}</span></a></li>
+        </ol>
+    </nav>
+{% endblock %}
+
+{% block content %}
+<h2>
+    {{_("Edit template \"{}\"").format(templateid)}}
+    <div class="pull-right">
+        <div class="btn-group">
+            <button class="btn btn-primary btn-success btn-sm task_edit_submit_button" type="button" onclick="studio_submit()"><i class="fa fa-save"></i> {{ _("Save changes") }}</button>
+        </div>
+    </div>
+</h2>
+
+<form id="edit_task_form" method="post" enctype="multipart/form-data" class="form-horizontal">
+    <input type="hidden" name="@action" value="edit_task"/>
+    <div class="card mb-3">
+        <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs" id="edit_task_tabs" role="tablist">
+                <li role="presentation" class="nav-item">
+                    <a href="#tab_files" class="nav-link" aria-controls="files" role="tab" data-toggle="tab"><i class="fa
+                    fa-edit fa-fw"></i>&nbsp; {{_("Template files")}}</a></li>
+            </ul>
+        </div>
+        <div id="edit_task_tabs_content" class="tab-content">
+
+            <div role="tabpanel" class="card-body tab-pane active" id="tab_files">
+                <ul class="nav nav-tabs" id="edit_file_tabs" role="tablist">
+                    <li class="nav-item" >
+                        <a href="#tab_file_list" class="nav-link active" aria-controls="basicinfo" role="tab" data-toggle="tab">
+                            <i class="fa fa-cog fa-list-ul"></i>&nbsp; {{ _("File list") }}
+                        </a>
+                    </li>
+                </ul>
+                <div id="edit_file_tabs_content" class="tab-content">
+                    {% with error=None %}
+                        {% include "files.html" %}
+                    {% endwith %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <button class="btn btn-primary btn-block task_edit_submit_button" type="button" onclick="studio_submit()"><i class="fa fa-save"></i> {{ _("Save changes") }}</button>
+</form>
+
+{% include "course_admin/edit_tabs/file_modals.html" %}
+
+{% endblock %}
