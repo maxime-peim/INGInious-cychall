@@ -1,0 +1,7 @@
+name: SQL Injection
+front:
+  difficulties:
+    - Easy
+back:
+  build_command: ''
+  build_script: ''

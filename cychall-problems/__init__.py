@@ -5,6 +5,8 @@
 
 import os
 import json
+import yaml
+import uuid
 
 from flask import send_from_directory
 from jinja2 import Environment, FileSystemLoader
@@ -24,6 +26,16 @@ def get_dirs(path):
     root, dirs, files = next(os.walk(path))
     return dirs
 
+def load_configuration(path, filename="configuration.yaml"):
+    configuration_path = os.path.join(path, filename)
+
+    if not os.path.exists(configuration_path):
+        raise FileNotFoundError(f"Exercice configuration file {path} should exists.")
+
+    with open(configuration_path, 'r') as config_file:
+        config = yaml.safe_load(config_file)
+    return config
+
 
 class StaticMockPage(INGIniousPage):
     def GET(self, path):
@@ -39,8 +51,9 @@ class CychallProblem(Problem):
     def __init__(self, problemid, content, translations, taskfs):
         Problem.__init__(self, problemid, content, translations, taskfs)
         self._header = str(content.get("header", ""))
-        self._exercice = str(content.get("exercice", ""))
+        self._exercice_path = str(content.get("exercice-path", ""))
         self._difficulty = str(content.get("difficulty", ""))
+        self._modify = content.get("modify", False)
 
     @classmethod
     def get_type(cls):
@@ -67,21 +80,37 @@ class CychallProblem(Problem):
 class DisplayableCychallProblem(CychallProblem, DisplayableProblem):
     """ A displayable match problem """
 
-    __paths_to_exercice_templates = []
+    __exercices_configurations = {}
 
     def __init__(self, problemid, content, translations, taskfs):
         CychallProblem.__init__(self, problemid, content, translations, taskfs)
 
     @classmethod
-    def add_path_to_exercice_templates(cls, path):
+    def add_path_to_exercices(cls, path, collection_name=""):
         if os.path.exists(path):
-            cls.__paths_to_exercice_templates.append(path)
+            cls.__exercices_configurations[path] = {
+                "name": collection_name or path, 
+                "collection": {}
+            }
+            exercices_collection = cls.__exercices_configurations[path]["collection"]
+
+            for exercice_folder in get_dirs(path):
+                exercice_path = os.path.join(path, exercice_folder)
+
+                exercices_collection[exercice_folder] = load_configuration(exercice_path)
+                exercices_collection[exercice_folder]["__id"] = uuid.uuid4()
+                exercices_collection[exercice_folder]["__path"] = exercice_path
 
     @classmethod
-    def get_all_exercice_templates(cls):
-        for path in cls.__paths_to_exercice_templates:
-            for exercice_template in get_dirs(path):
-                yield (os.path.join(path, exercice_template), exercice_template)
+    def add_local_exercices(cls, course, taskid, task_data, template_helper):
+        task_fs = course.get_task(taskid).get_fs()
+        scripts_fs = task_fs.from_subfolder("student/scripts")
+        cls.add_path_to_exercices(scripts_fs.prefix, "Local")
+
+    @classmethod
+    @property
+    def exercices_configurations(cls):
+        return cls.__exercices_configurations
 
     @classmethod
     def get_type_name(self, language):
@@ -91,11 +120,20 @@ class DisplayableCychallProblem(CychallProblem, DisplayableProblem):
         """ Show CychallProblem """
         header = ParsableText(self.gettext(language, self._header), "rst",
                               translation=self.get_translation_obj(language))
-        return template_helper.render("cychall.html", template_folder=PATH_TO_TEMPLATES, inputId=self.get_id(), exercice=self._exercice, difficulty=self._difficulty, header=header)
+        exercice_configuration = load_configuration(self._exercice_path)
+
+        return template_helper.render("cychall.html",
+                                      template_folder=PATH_TO_TEMPLATES,
+                                      pid=self.get_id(),
+                                      exercice_name=exercice_configuration.get("name", ""),
+                                      difficulty=self._difficulty,
+                                      header=header)
 
     @classmethod
     def show_editbox(cls, template_helper, key, language):
-        return template_helper.render("cychall_edit.html", template_folder=PATH_TO_TEMPLATES, key=key, exercice_templates=cls.get_all_exercice_templates())
+        return template_helper.render("cychall_edit.html",
+                                      template_folder=PATH_TO_TEMPLATES,
+                                      key=key, exercices_configurations=cls.exercices_configurations)
 
     @classmethod
     def show_editbox_templates(cls, template_helper, key, language):
@@ -104,23 +142,11 @@ class DisplayableCychallProblem(CychallProblem, DisplayableProblem):
 
 def default_run_file_content():
 	# Temporary function
-	return '#!/bin/bash\n# Configuration has to be done directly onto the student container\nssh_student --user step1 --script-as-root --setup-script "generate-steps"\ncheck-flag --student-flag-path /task/student/answer --correct-flag-path /task/student/end/flag'
-
-def add_next_step(stepi, exercice_template, scripts_fs, last_step=False):
-    current_user = f'step{stepi}'
-    next_user = f'step{stepi+1}' if not last_step else 'end'
-
-    step_fs = scripts_fs.from_subfolder(current_user)
-    step_fs.ensure_exists() # Create step dir
-    
-    step_fs.copy_to(exercice_template) # Copy template files to step dir
-    
-    # TODO: needed for all step files
-    if step_fs.exists("post"): # Set file owner(s) in post script
-        env = Environment(loader=FileSystemLoader(step_fs.prefix))
-        post_script_template = env.get_template('post')
-        post_script_parsed = post_script_template.render(current_user=current_user, next_user=next_user)
-        step_fs.put("post", post_script_parsed)
+	return """#!/bin/bash
+    # Configuration has to be done directly onto the student container
+    ssh_student --user step1 --script-as-root --setup-script "generate-steps"
+    check-flag --student-flag-path /task/student/answer --correct-flag-path /task/student/end/flag
+    """
 
 def generate_task_steps(course, taskid, task_data, task_fs):
     subproblems = task_data['problems']
@@ -129,28 +155,55 @@ def generate_task_steps(course, taskid, task_data, task_fs):
         not all(subproblem["type"] == "cychall" for subproblem in subproblems.values()):
         return json.dumps({"status": "error", "message": "There is at least one sub-problem of type cychall, all must be."})
 
-    task_fs.delete()
+    # task_fs.delete()
 
     n_steps = len(subproblems)
     if n_steps == 0:
         return
 
+    task_configuration = {}
+
     scripts_fs = task_fs.from_subfolder("student/scripts")
     scripts_fs.ensure_exists() # Create scripts dir
     
     for stepi, subproblem in enumerate(subproblems.values(), start=1):
-        print(stepi, subproblem["exercice"])
-        add_next_step(stepi, subproblem["exercice"], scripts_fs, stepi==n_steps)
+        exercice_path = subproblem["exercice-path"]
+        to_modify = subproblem.get("modify", False)
+        is_local = exercice_path.startswith(scripts_fs.prefix)
+
+        if to_modify and not is_local:
+            local_exercice_fs = scripts_fs.from_subfolder(os.path.basename(exercice_path))
+            if not local_exercice_fs.exists():
+                local_exercice_fs.ensure_exists()
+                local_exercice_fs.copy_to(exercice_path)
+            exercice_path = local_exercice_fs.prefix
+
+        task_configuration[f"step{stepi}"] = {
+            "exercice-path": exercice_path,
+            "difficulty": subproblem["difficulty"],
+            "next-user": f"step{stepi+1}" if stepi < len(subproblems) else "end"
+        }
     
+    task_fs.put("build.yaml", yaml.safe_dump(task_configuration))
     task_fs.put("run", default_run_file_content())
 
 
 def init(plugin_manager, course_factory, client, plugin_config):
-    path_to_exercice_templates = plugin_config.get("exercice_templates", "")
-    DisplayableCychallProblem.add_path_to_exercice_templates(path_to_exercice_templates)
+    if "exercice_templates" in plugin_config:
+        paths_to_exercices = plugin_config["exercice_templates"]
+
+        if isinstance(paths_to_exercices, str):
+            DisplayableCychallProblem.add_path_to_exercices(paths_to_exercices)
+        elif isinstance(paths_to_exercices, list):
+            for path in paths_to_exercices:
+                DisplayableCychallProblem.add_path_to_exercices(path)
+        elif isinstance(paths_to_exercices, dict):
+            for collection_name, path in paths_to_exercices.items():
+                DisplayableCychallProblem.add_path_to_exercices(path, collection_name)
 
     plugin_manager.add_page('/plugins/cychall/static/<path:path>', StaticMockPage.as_view("cychallproblemstaticpage"))
     plugin_manager.add_hook("css", lambda: "/plugins/cychall/static/cychall.css")
     plugin_manager.add_hook("javascript_header", lambda: "/plugins/cychall/static/cychall.js")
     plugin_manager.add_hook('task_editor_submit', generate_task_steps)
+    plugin_manager.add_hook('task_editor_tab', DisplayableCychallProblem.add_local_exercices)
     course_factory.get_task_factory().add_problem_type(DisplayableCychallProblem)
