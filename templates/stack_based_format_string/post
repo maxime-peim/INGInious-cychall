@@ -1,0 +1,6 @@
+#!/bin/bash
+
+chown {{next_user}} challenge
+chmod 440 challenge.c
+chmod 550 challenge
+chmod u+s challenge
