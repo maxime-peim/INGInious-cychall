@@ -88,18 +88,17 @@ class TemplatesList(TemplateManager):
 			
 			file.save(os.path.join(file_folder.prefix, filename))
 	
-	def get_output_dir(self, courseid, template_name, is_public):
+	def get_output_dir(self, courseid, template_id, is_public):
+		
 		
 		output_dir = self.course_factory.get_course_fs(courseid).from_subfolder("templates") # Default output to course templates
-		
-		template_name = secure_filename(template_name.strip().lower().replace(" ", "")) # Normalize user input to valid folder name
 		
 		if is_public:
 			output_dir = LocalFSProvider(TemplateManager.path_to_exercise_templates)
 		
 		output_dir.ensure_exists() # Create templates folder
 		
-		template_folder = output_dir.from_subfolder(template_name)
+		template_folder = output_dir.from_subfolder(template_id)
 		
 		if template_folder.exists():
 			return None
@@ -128,18 +127,19 @@ class TemplatesList(TemplateManager):
 		templates = self.get_all_templates(course)
 		return self.template_helper.render("template_manager.html", template_folder=utils.PATH_TO_TEMPLATES, course=course, public_templates=templates[0], course_templates=templates[1], error=error)
 	
-	def upload_template(self, courseid, template_name, files, is_public):
+	def upload_template(self, courseid, templateid, files, is_public):
 		course = self.course_factory.get_course(courseid)
-		template_folder = self.get_output_dir(courseid, template_name, is_public)
+		template_folder = self.get_output_dir(courseid, templateid, is_public)
 		self.save_files(files, template_folder)
 		
 		templates = self.get_all_templates(course)
 		
 		return self.show_page(courseid)
 	
-	def delete_template(self, courseid, template_name):
-		template_fs = self.get_template_fs(courseid, template_name)
-		template_fs.delete()
+	def delete_template(self, courseid, templateid):
+		template_fs = self.get_template_fs(courseid, templateid)
+		if template_fs is not None:
+			template_fs.delete()
 	
 	def POST_AUTH(self, courseid):
 		self.get_course_and_check_rights(courseid, allow_all_staff=False)	
@@ -147,17 +147,17 @@ class TemplatesList(TemplateManager):
 		if "upload" in request.form:
 			files = request.files.getlist("file")
 			is_public = request.form.get("public", False)
-			template_name = request.form.get("template_name", None)
+			templateid = request.form.get("template_id", None)
 			
-			if template_name is None:
-				return self.show_page(courseid, _("Invalid template name"))
-			return self.upload_template(courseid, template_name, files, is_public)
+			if templateid is None or id_checker(templateid):
+				return self.show_page(courseid, _("Invalid template id"))
+			return self.upload_template(courseid, templateid, files, is_public)
 		
 		elif "delete" in request.form:
-			template_name = request.form.get("template_id", None)
-			if template_name is None:
-				return self.show_page(courseid, _("Invalid template name"))
-			self.delete_template(courseid, template_name)
+			templateid = request.form.get("template_id", None)
+			if templateid is None or id_checker(templateid):
+				return self.show_page(courseid, _("Invalid template id"))
+			self.delete_template(courseid, templateid)
 		
 		return self.show_page(courseid)
 
@@ -168,6 +168,8 @@ class TemplateEdit(TemplateManager):
 		super().__init__()
 	
 	def GET_AUTH(self, courseid, templateid):
+		if not id_checker(templateid):
+			raise NotFound(description=_("Invalid task id"))
 		self.get_course_and_check_rights(courseid, allow_all_staff=False)
 		course = self.course_factory.get_course(courseid)
 		template_fs = self.get_template_fs(courseid, templateid)
@@ -255,7 +257,7 @@ class TemplateFiles(TemplateManager):
 		template_fs = self.get_template_fs(courseid, templateid)
 		wanted_path = self.verify_path(courseid, templateid, path)
 		if template_fs is None or wanted_path is None:
-			return "Internal error"
+			return json.dumps({"error": "internal-error"})"
 		try:
 			content = template_fs.get(wanted_path).decode("utf-8")
 			return json.dumps({"content": content})
