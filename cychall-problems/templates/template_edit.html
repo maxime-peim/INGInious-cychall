@@ -27,10 +27,12 @@
     {{_("Edit template \"{}\"").format(templateid)}}
     <div class="pull-right">
         <div class="btn-group">
-            <button class="btn btn-primary btn-success btn-sm task_edit_submit_button" type="button" onclick="studio_submit()"><i class="fa fa-save"></i> {{ _("Save changes") }}</button>
+            <button class="btn btn-primary btn-success btn-sm template_edit_submit_button" type="button" onclick="studio_template_submit()"><i class="fa fa-save"></i> {{ _("Save changes") }}</button>
         </div>
     </div>
 </h2>
+
+<div id="template_edit_submit_status"></div>
 
 <form id="edit_task_form" method="post" enctype="multipart/form-data" class="form-horizontal">
     <input type="hidden" name="@action" value="edit_task"/>
@@ -60,7 +62,6 @@
             </div>
         </div>
     </div>
-    <button class="btn btn-primary btn-block task_edit_submit_button" type="button" onclick="studio_submit()"><i class="fa fa-save"></i> {{ _("Save changes") }}</button>
 </form>
 
 {% include "course_admin/edit_tabs/file_modals.html" %}

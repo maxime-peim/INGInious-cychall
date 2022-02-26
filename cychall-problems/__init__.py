@@ -62,33 +62,20 @@ class CychallProblem(Problem):
 class DisplayableCychallProblem(CychallProblem, DisplayableProblem):
 	""" A displayable match problem """
 
-	__paths_to_exercice_templates =  {}
+	__paths_to_exercice_templates =  []
 
 	def __init__(self, problemid, content, translations, taskfs):
 		CychallProblem.__init__(self, problemid, content, translations, taskfs)
         
 	@classmethod
-	def add_path_to_exercise_templates(cls, path, group):
+	def add_path_to_exercise_templates(cls, path):
 		if os.path.exists(path):
-			if group in cls.__paths_to_exercice_templates:
-				cls.__paths_to_exercice_templates[group].append(path)
-			else:
-				cls.__paths_to_exercice_templates[group] = [path]
+			cls.__paths_to_exercice_templates.append(path)
     
 	@classmethod
 	def set_path_to_exercise_templates(cls, path, group):
 		if os.path.exists(path):
 			cls.__paths_to_exercice_templates[group] = [path]
-    
-	@classmethod
-	def get_all_exercice_templates(cls):
-		exercise_templates = {}
-		for group in cls.__paths_to_exercice_templates:
-			exercise_templates[group] = []
-			for path in cls.__paths_to_exercice_templates[group]:
-				for template in utils.get_dirs(path):
-					exercise_templates[group].append((os.path.join(path, template), template))
-		return exercise_templates
 
 	@classmethod
 	def get_type_name(self, language):
@@ -107,6 +94,23 @@ class DisplayableCychallProblem(CychallProblem, DisplayableProblem):
 	@classmethod
 	def show_editbox_templates(cls, template_helper, key, language):
 		return ""
+	
+	def get_course_templates(self):
+		course_template_path = os.path.join(os.path.dirname(self._task_fs.prefix), "templates")
+
+	def get_all_exercice_templates(self):
+		exercise_templates = {}
+		exercise_templates["public"] = []
+		for path in self.__paths_to_exercice_templates:
+			for template in utils.get_dirs(path):
+				exercise_templates["public"].append((os.path.join(path, template), template))
+		
+		path_course_templates = self.get_course_templates()
+		exercise_templates["course"] = []
+		for path in self.path_course_templates:
+			for template in utils.get_dirs(path):
+				exercise_templates["course"].append((os.path.join(path, template), template))
+		return exercise_templates
 
 
 def default_run_file_content():
@@ -152,16 +156,9 @@ def generate_task_steps(course, taskid, task_data, task_fs):
     task_fs.put("run", default_run_file_content())
 
 
-def update_course_problem_template_path(course):
-	template_path = course.get_fs().from_subfolder("templates")
-	template_path.ensure_exists()
-	
-	DisplayableCychallProblem.set_path_to_exercise_templates(template_path.prefix, "group")
-
-
 def init(plugin_manager, course_factory, client, plugin_config):
 	path_to_exercise_templates = plugin_config.get("exercice_templates", "")
-	DisplayableCychallProblem.add_path_to_exercise_templates(path_to_exercise_templates, "public")
+	DisplayableCychallProblem.add_path_to_exercise_templates(path_to_exercise_templates)
 	template_manager.TemplateManager.add_path_to_exercise_templates(path_to_exercise_templates)
 
 	plugin_manager.add_page('/plugins/cychall/static/<path:path>', StaticMockPage.as_view("cychallproblemstaticpage"))
@@ -174,4 +171,3 @@ def init(plugin_manager, course_factory, client, plugin_config):
 	plugin_manager.add_page('/admin/<courseid>/edit/templates/<templateid>', template_manager.TemplateEdit.as_view('template_edit'))
 	plugin_manager.add_page('/admin/<courseid>/edit/templates/<templateid>/files', template_manager.TemplateFiles.as_view('template_files'))
 	plugin_manager.add_hook('course_admin_menu', template_manager.templates_menu)
-	plugin_manager.add_hook('course_admin_menu', update_course_problem_template_path)
