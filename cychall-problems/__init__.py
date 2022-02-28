@@ -3,18 +3,24 @@
 # This file is part of INGInious. See the LICENSE and the COPYRIGHTS files for
 # more information about the licensing of this file.
 
+from http.client import SWITCHING_PROTOCOLS
+from nis import match
 import os
 import json
 import yaml
 import uuid
 
-from flask import send_from_directory
+from flask import send_from_directory, request
 from jinja2 import Environment, FileSystemLoader
+from werkzeug.exceptions import  NotFound
 
 from inginious.common.tasks_problems import Problem
 from inginious.frontend.pages.utils import INGIniousPage
 from inginious.frontend.task_problems import DisplayableProblem
 from inginious.frontend.parsable_text import ParsableText
+from inginious.frontend.pages.course_admin.utils import INGIniousAdminPage
+
+from inginious.common.base import id_checker
 
 __version__ = "0.1.dev0"
 
@@ -28,7 +34,6 @@ def get_dirs(path):
 
 def load_configuration(path, filename="configuration.yaml"):
     configuration_path = os.path.join(path, filename)
-
     if not os.path.exists(configuration_path):
         raise FileNotFoundError(f"Exercice configuration file {path} should exists.")
 
@@ -36,6 +41,40 @@ def load_configuration(path, filename="configuration.yaml"):
         config = yaml.safe_load(config_file)
     return config
 
+def check_option_format(option_dict):
+    return "id" in option_dict and "type" in option_dict
+
+class ExerciseConfigurationOptions(INGIniousAdminPage):
+    def GET_AUTH(self, courseid, taskid):  # pylint: disable=arguments-differ
+
+        self.get_course_and_check_rights(courseid, allow_all_staff=False)
+
+        user_input = request.args
+        if user_input.get('problem_id') is not None and user_input.get('difficulty') is not None and user_input.get('exercise') is not None:
+            exercise_configuration = self.get_exercise_configuration(user_input.get('difficulty'), user_input.get('exercise'))
+            return self.show_exercise_options_tab(user_input.get("problem_id"), exercise_configuration, user_input.get("difficulty"))
+        return self.template_helper.render("exercise_options.html", template_folder=PATH_TO_TEMPLATES)
+    
+    def get_exercise_configuration(self, difficulty, exercise):
+        exercise_configuration = DisplayableCychallProblem.exercices_configurations()
+        for path in exercise_configuration:
+            if exercise in exercise_configuration[path]["collection"]:
+                return exercise_configuration[path]["collection"][exercise]
+    
+    def parse_element_option(self, element, difficulty):
+        if "id" in element and "type" in element: # TODO: Check that type is supported
+            label = element["label"] if "label" in element else element["id"]
+            if "modes" not in element or difficulty in element["modes"]:
+                return (element["id"], label, element["type"])
+    
+    def show_exercise_options_tab(self, problem_id, exercise_configuration, difficulty):
+        options_elements = []
+        if "front" in exercise_configuration and "elements" in exercise_configuration["front"]:
+            for element in exercise_configuration["front"]["elements"]:
+                options = self.parse_element_option(element, difficulty)
+                if options is not None:
+                    options_elements.append(options)
+        return self.template_helper.render("exercise_options.html", template_folder=PATH_TO_TEMPLATES, exercise_options=options_elements, PID=problem_id)
 
 class StaticMockPage(INGIniousPage):
     def GET(self, path):
@@ -93,7 +132,6 @@ class DisplayableCychallProblem(CychallProblem, DisplayableProblem):
                 "collection": {}
             }
             exercices_collection = cls.__exercices_configurations[path]["collection"]
-
             for exercice_folder in get_dirs(path):
                 exercice_path = os.path.join(path, exercice_folder)
 
@@ -107,8 +145,9 @@ class DisplayableCychallProblem(CychallProblem, DisplayableProblem):
         scripts_fs = task_fs.from_subfolder("student/scripts")
         cls.add_path_to_exercices(scripts_fs.prefix, "Local")
 
+    # Property is not iterable error: add metaclass?
+    # https://stackoverflow.com/questions/29994618/classmethod-property-typeerror-property-object-is-not-iterable
     @classmethod
-    @property
     def exercices_configurations(cls):
         return cls.__exercices_configurations
 
@@ -121,7 +160,6 @@ class DisplayableCychallProblem(CychallProblem, DisplayableProblem):
         header = ParsableText(self.gettext(language, self._header), "rst",
                               translation=self.get_translation_obj(language))
         exercice_configuration = load_configuration(self._exercice_path)
-
         return template_helper.render("cychall.html",
                                       template_folder=PATH_TO_TEMPLATES,
                                       pid=self.get_id(),
@@ -133,7 +171,7 @@ class DisplayableCychallProblem(CychallProblem, DisplayableProblem):
     def show_editbox(cls, template_helper, key, language):
         return template_helper.render("cychall_edit.html",
                                       template_folder=PATH_TO_TEMPLATES,
-                                      key=key, exercices_configurations=cls.exercices_configurations)
+                                      key=key, exercices_configurations=cls.__exercices_configurations)
 
     @classmethod
     def show_editbox_templates(cls, template_helper, key, language):
@@ -149,6 +187,7 @@ def default_run_file_content():
     """
 
 def generate_task_steps(course, taskid, task_data, task_fs):
+    print(task_data)
     subproblems = task_data['problems']
 
     if any(subproblem["type"] == "cychall" for subproblem in subproblems.values()) and \
@@ -191,7 +230,6 @@ def generate_task_steps(course, taskid, task_data, task_fs):
 def init(plugin_manager, course_factory, client, plugin_config):
     if "exercice_templates" in plugin_config:
         paths_to_exercices = plugin_config["exercice_templates"]
-
         if isinstance(paths_to_exercices, str):
             DisplayableCychallProblem.add_path_to_exercices(paths_to_exercices)
         elif isinstance(paths_to_exercices, list):
@@ -202,8 +240,8 @@ def init(plugin_manager, course_factory, client, plugin_config):
                 DisplayableCychallProblem.add_path_to_exercices(path, collection_name)
 
     plugin_manager.add_page('/plugins/cychall/static/<path:path>', StaticMockPage.as_view("cychallproblemstaticpage"))
+    plugin_manager.add_page('/admin/<courseid>/edit/task/<taskid>/exercise_options', ExerciseConfigurationOptions.as_view('exercise_options'))
     plugin_manager.add_hook("css", lambda: "/plugins/cychall/static/cychall.css")
     plugin_manager.add_hook("javascript_header", lambda: "/plugins/cychall/static/cychall.js")
     plugin_manager.add_hook('task_editor_submit', generate_task_steps)
-    plugin_manager.add_hook('task_editor_tab', DisplayableCychallProblem.add_local_exercices)
     course_factory.get_task_factory().add_problem_type(DisplayableCychallProblem)

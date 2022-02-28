@@ -34,3 +34,31 @@ function studio_update_difficulty() {
 function load_feedback_cychall(key, content) {
     load_feedback_code(key, content);
 }
+
+
+function reload_options(problem_id){
+    var difficulty = $("#difficulty-selector" + '-' + problem_id).val();
+    var exercise = $("#exercise-selector" + '-' + problem_id).val();
+    studio_update_exercise_options({"problem_id": problem_id, "difficulty": difficulty, "exercise": exercise}, "GET");
+}
+
+
+ function studio_update_exercise_options(data, method)
+{
+    if(data == undefined)
+        data = {};
+    if(method == undefined)
+        method = "GET";
+    var problem_id = data["problem_id"];
+    jQuery.ajax({
+        success:    function(data)
+                    {
+                        console.log(problem_id);
+                        console.log($("#exercise-options" + '-' + problem_id));
+                        $("#exercise-options" + '-' + problem_id).replaceWith(data);
+                    },
+        method:     method,
+        data:       data,
+        url:        location.pathname + "/exercise_options"
+    });
+}
