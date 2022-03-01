@@ -1,9 +1,7 @@
 name: Stack Based - ret2stack
-front:
+options:
   difficulties:
     - Easy
     - Medium
     - Hard
-back:
-  build_command: ''
-  build_script: ''
+    - Elite

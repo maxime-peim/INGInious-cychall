@@ -1,0 +1,141 @@
+{# This file is part of INGInious. See the LICENSE and the COPYRIGHTS files for #}
+{# more information about the licensing of this file. #}
+{% extends "layout.html" %}
+
+{% block title %} {{ course.get_name(user_manager.session_language()) }} - {{ _("Manage templates") }} {% endblock %}
+
+{% block column %}
+    {{ template_helper.call('course_admin_menu',course=course,current='templates') | safe }}
+{% endblock %}
+
+{% block navbar %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{get_homepath()}}/course/{{course.get_id()}}">{{ course.get_name(user_manager.session_language()) }}</a></li>
+            <li class="breadcrumb-item"><a href="{{get_homepath()}}/admin/{{course.get_id()}}" title="{{ _('Administration') }}" data-toggle="tooltip" data-placement="bottom">
+                <i class="fa fa-user-secret"></i></a></li>
+            <li class="breadcrumb-item active"><a href="#"><i class="fa fa-tasks"></i> {{_("Manage templates")}} <span class="sr-only">{{ _("(current)") }}</span></a></li>
+        </ol>
+    </nav>
+{% endblock %}
+
+{% block content %}
+{% if error %}
+<div class="alert alert-danger alert-dismissible fade show" role="alert">
+  <strong>{{ error }}</strong>
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+{% endif %}
+<div class="d-flex">
+	<h2>{{_("Manage Cybersecurity templates")}}</h2>
+	<button type="button" class="btn btn-primary ml-auto" data-toggle="modal" data-target="#uploadFileModal">
+	  Upload
+	</button>
+</div>
+
+<div class="modal fade" id="uploadFileModal" tabindex="-1" role="dialog" aria-labelledby="uploadFileModalTitle" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <form method="POST" id="uploadTemplate" onsubmit="return check_template_id(event)" enctype="multipart/form-data">
+      <div class="modal-header">
+        <h5 class="modal-title" id="uploadFileModelTitle">Upload new template</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+      	<div class="form-group">
+			<label for="template_id">Template id</label>
+			<div class="input-name">
+				<input type="text" name="template_id" placeholder="template-id" id="template_id" required>
+			</div>
+      	</div>
+      	
+        <div class="form-group">
+          <label>Select template</label>
+          <div class="custom-file">
+            <input type="file" class="custom-file-input" name="file" multiple="" webkitdirectory="true" id="template" required>
+            <label class="custom-file-label" for="template">Select template...</label>
+          </div>
+        </div>
+        <input type="checkbox" name="public">
+        <label for="public">Available to all</label>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="submit" class="btn btn-primary" name="upload">Upload template</button>
+      </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="card mt-5">
+  <div class="card-header">
+    Public
+  </div>
+  <div class="card-body">
+  	{% if public_templates %}
+  		<div class="content list-group list-group-flush">
+  		{% for template in public_templates %}
+		  <div id="public_{{template.id}}" class="template handle list-group-item list-group-item-action d-flex">
+	            <div class="template_id">
+	                <h5>{{ template.name }}</h5>
+	            </div>
+	            {% include "template_buttons.html" %}
+        	</div>
+        	{% endfor %}
+		</div>
+    {% else %}
+    	<h5 class="card-title">No templates found</h5>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card mt-5">
+  <div class="card-header">
+    Course
+  </div>
+  <div class="card-body">
+  	{% if course_templates %}
+  		<div class="content list-group list-group-flush">
+  		{% for template in course_templates %}
+		  <div id="course_{{template.id}}" class="template handle list-group-item list-group-item-action d-flex">
+	            <div class="template_id">
+	                <h5>{{ template.name }}</h5>
+	            </div>
+	            {% include "template_buttons.html" %}
+        	</div>
+        	{% endfor %}
+		</div>
+    {% else %}
+    	<h5 class="card-title">No templates found</h5>
+    {% endif %}
+  </div>
+</div>
+
+<div id="delete_template_modal" class="modal fade">
+    <div class="modal-dialog">
+    	<form method="post">
+		    <div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="uploadFileModelTitle">Delete template</h5>
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					  <span aria-hidden="true">&times;</span>
+					</button>
+			  	</div>
+	            <div class="modal-body">
+	                  <p>{{ _("<b>Permanently</b> remove the template and its files from INGInious?") | safe }}</p>
+	            </div>
+	            <div class="modal-footer">
+	                <button class="btn btn-secondary" data-dismiss="modal">{{_("Cancel")}}</button>
+	                <button class="btn btn-danger submit" name="delete" >{{ _("Delete template") }}</button>
+	            </div>
+		    </div>
+		    <input class="template_id" name="template_id" type="hidden"></input>
+        </form>
+    </div>
+</div>
+{% endblock %}

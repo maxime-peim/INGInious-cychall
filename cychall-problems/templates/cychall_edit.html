@@ -5,15 +5,29 @@
     <label for="exercice-path-PID" class="col-sm-2 control-label">Exercice</label>
     <div class="col-sm-10">
         <select type="text" class="form-control" id="exercice-path-PID" name="problem[PID][exercice-path]">
-            {% for parent_path, exercice_configurations in exercices_configurations.items() %}
-                <optgroup label="{{ exercice_configurations['name'] }}">
-                {% for exercice_folder, configuration in exercice_configurations['collection'].items() %}
-                    <option value="{{ configuration['__path'] }}" class="exercice-{{ configuration['__id'] }}">
-                        {{ configuration.get('name', exercice_folder) }}
-                    </option>
-                {% endfor %}
-                </optgroup>
-            {% endfor %}
+            <optgroup label="Public">
+                {% if public_templates %}
+                    {% for template in public_templates %}
+                        <option value="{{ template.path }}" class="exercice-{{ template.unique_id }}">
+                            {{ template.name }}
+                        </option>
+                    {% endfor %}
+                {% else %}
+                    <option disabled>No templates found</option>
+                {% endif %}
+            </optgroup>
+
+            <optgroup label="Course specific">
+                {% if course_templates %}
+                    {% for template in course_templates %}
+                        <option value="{{ template.path }}" class="exercice-{{ template.unique_id }}">
+                            {{ template.name }}
+                        </option>
+                    {% endfor %}
+                {% else %}
+                    <option disabled>No templates found</option>
+                {% endif %}
+            </optgroup>
         </select>
     </div>
 </div>
@@ -27,6 +41,10 @@
     <label for="difficulty-PID" class="col-sm-2 control-label">Difficulty</label>
     <div class="col-sm-10">
         <select type="text" class="form-control" id="difficulty-PID" name="problem[PID][difficulty]">
+            {% if public_templates %}
+
+            {% endif %}
+
             {% for exercice_configurations in exercices_configurations.values() %}
                 {% for configuration in exercice_configurations['collection'].values() %}
                     {% set difficulties = configuration.get('front', {}).get('difficulties', []) %}
@@ -38,13 +56,5 @@
                 {% endfor %}
             {% endfor %}
         </select>
-    </div>
-</div>
-<div class="form-group row">
-    <label for="modify-PID" class="col-sm-3 control-label">Modify challenge content</label>
-    <div class="col-sm-9">
-        <div class="checkbox">
-                <input id="modify-PID" name="problem[PID][modify]" type="checkbox" />
-        </div>
     </div>
 </div>
