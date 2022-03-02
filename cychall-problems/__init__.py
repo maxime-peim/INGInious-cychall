@@ -103,7 +103,7 @@ class DisplayableCychallProblem(CychallProblem, DisplayableProblem):
 									  header=header)
 
 	@classmethod
-	def show_editbox(cls, template_helper, key, language, course, taskid):
+	def show_editbox(cls, template_helper, key, language, course=None, taskid=None, *args, **kwargs):
 		public_templates, course_templates = cls._template_manager_singleton.get_all_templates(course.get_id())
 
 		return template_helper.render("cychall_edit.html",
@@ -112,7 +112,7 @@ class DisplayableCychallProblem(CychallProblem, DisplayableProblem):
 									  course_templates=course_templates)
 
 	@classmethod
-	def show_editbox_templates(cls, template_helper, key, language, course, taskid):
+	def show_editbox_templates(cls, template_helper, key, language, course=None, taskid=None, *args, **kwargs):
 		return ""
 
 
@@ -179,6 +179,6 @@ def init(plugin_manager, course_factory, client, plugin_config):
 	course_factory.get_task_factory().add_problem_type(DisplayableCychallProblem)
 	
 	plugin_manager.add_page('/admin/<courseid>/templates', template_manager.TemplatesList.as_view('templates'))
-	plugin_manager.add_page('/admin/<courseid>/edit/templates/<templateid>', template_manager.TemplateEdit.as_view('template_edit'))
-	plugin_manager.add_page('/admin/<courseid>/edit/templates/<templateid>/files', template_manager.TemplateFiles.as_view('template_files'))
+	plugin_manager.add_page('/admin/<courseid>/edit/templates/<template_id>', template_manager.TemplateEdit.as_view('template_edit'))
+	plugin_manager.add_page('/admin/<courseid>/edit/templates/<template_id>/files', template_manager.TemplateFiles.as_view('template_files'))
 	plugin_manager.add_hook('course_admin_menu', template_manager.templates_menu)

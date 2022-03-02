@@ -25,41 +25,53 @@ class TemplateIDExists(Exception):
 
 
 class Template:
-	""" Class associated with templates.
-	It checks a template structure from a path to a template folder
-	and eases template files manipulation """
+	""" 
+		Class associated with templates management.
+		It checks a template structure from a path to a template folder
+		and eases template files manipulation.
+	"""
 
 	def __init__(self, path):
+		"""
+			From a path to a folder containing template's files,
+			we check from the template's structure.
+		"""
 		self._path = path
 		self._fs = LocalFSProvider(path)
 		self._id = os.path.basename(os.path.normpath(path))
-		self._config = None
+		self._name = None
+		self._options = None
 
 		self.validation()
 
 	@property
 	def id(self):
+		""" Returns the template id, unique in the parent folder. """
 		return self._id
 
 	@property
 	def fs(self):
+		""" Returns the file system pointing to the template files. """
 		return self._fs
 
 	@property
 	def path(self):
+		""" Returns the path to the templates files. """
 		return self._path
 
 	@property
 	def unique_id(self):
+		""" Returns a unique id over all templates. """
 		return hash(self._path)
 
 	@property
 	def name(self):
-		return self._config["name"]
+		""" Returns the template name from the template configuration. """
+		return self._name
 
 	def get_option(self, option_name):
-		options = self._config.get("options", {})
-		option = options.get(option_name, {})
+		""" Returns option type and possible values from configuration. """
+		option = self._options.get(option_name, {})
 		
 		option_type = option.get("type", None)
 		option_values = option.get("values", None)
@@ -67,26 +79,43 @@ class Template:
 		return option_type, option_values
 
 	def delete(self):
+		""" Delete the template's files """
 		self._fs.delete()
 
 	def validation(self):
+		""" 
+			Check for template structure.
+			Raise a TemplateStructureException if not valid.
+		"""
+
+		# if the path to the files does not exists, stop
 		if not self._fs.exists():
 			raise TemplateStructureException(f"Path to template {self._path} does not exists.")
 
+		# the template id need to be valid
 		if not id_checker(self._id):
 			raise TemplateStructureException(f"Template id {self._id} from {self._path} is not valid.")
 
 		configuration_path = os.path.join(self._path, "configuration.yaml")
 		try:
-			self._config = load_json_or_yaml(configuration_path)
+			# a configuration file is mandatory in the folder
+			config = load_json_or_yaml(configuration_path)
+			# load the options
+			self._options = config.get("otpions", {})
+			# and the mandatory template name
+			self._name = config.get("name", None)
 		except Exception:
 			raise TemplateStructureException(f"{configuration_path} not found.")
 
-		if "name" not in self._config:
+		# if the name is not set, raise an exception
+		if self._name is None:
 			raise TemplateStructureException(f"Template name not set in {configuration_path}.")
+	
 
 	@classmethod
 	def validation_from_files(cls, template_id, files):
+		""" Check whether template's files have the valid structure on upload. """
+
 		if not id_checker(template_id):
 			raise TemplateStructureException(f"Template id {template_id} is not valid.")
 		
@@ -94,7 +123,7 @@ class Template:
 		for file in files:
 			if os.path.basename(file.filename) == "configuration.yaml":
 				content = custom_yaml.load(file.stream)
-				# place the cursor to the beginning if stream
+				# place the cursor to the beginning of stream
 				# else we will save nothing in the file
 				file.stream.seek(0)
 				if "name" in content:
@@ -105,8 +134,10 @@ class Template:
 			raise TemplateStructureException(f"Configuration file not found or template name not set.")
 
 class TemplateFolder:
-	""" Class associated with folder containing templates.
-	Eases template files manipulation and template access. """
+	"""
+		Class associated with folder containing several templates.
+		Eases template files manipulation and template access.
+	"""
 
 	def __init__(self, path):
 		self._path = path
@@ -120,6 +151,10 @@ class TemplateFolder:
 			template_path = os.path.join(self._path, template_folder_name)
 			template = Template(template_path)
 			self._templates[template.id] = template
+
+	@property
+	def path(self):
+		return self._path
 
 	def add_template_from_files(self, template_id, files):
 		# Check if the template id is available in the folder
@@ -150,13 +185,18 @@ class TemplateFolder:
 		template = Template(template_fs.prefix)
 		self._templates[template.id] = template
 
+	def template_exists(self, template_id):
+		return template_id in self._templates
+
 	def delete_template(self, template_id):
 		template = self.get_template(template_id)
 		template.delete()
 		del self._templates[template_id]
 
 	def get_template(self, template_id):
-		return self._templates.get(template_id, None)
+		if template_id not in self._templates:
+			raise NotFound(f"Template {template_id} not found in {self._path}.")
+		return self._templates[template_id]
 
 	def get_all_templates(self):
 		return self._templates.values()
@@ -193,11 +233,16 @@ class TemplateManager:
 		return self._template_folders[courseid]
 
 	def get_template(self, courseid, template_id):
+		template = None
+
 		try:
 			template_folder = self.get_course_template_folder(courseid)
+			template = template_folder.get_template(template_id)
 		except NotFound:
 			template_folder = self._template_folders["$common"]
-		return template_folder.get_template(template_id)
+			template = template_folder.get_template(template_id)
+		
+		return template
 
 	def get_template_fs(self, courseid, template_id):
 		return self.get_template(courseid, template_id).fs
@@ -219,13 +264,31 @@ class TemplateManager:
 		
 		return common, course_specific
 
+	def add_template_from_files(self, courseid, template_id, files):
+		# we must not add template with id already in course or common folder
+		# else there can be problem on editing a template since we don't know
+		# if the template is public or course specific.
+		course_template_folder = self.get_course_template_folder(courseid, ensure_exists=True)
+		common_template_folder = self._template_folders["$common"]
+
+		# Check if the template id is available in the folder
+		if course_template_folder.template_exists(template_id):
+			raise TemplateIDExists(template_id, course_template_folder.path)
+		
+		if common_template_folder.template_exists(template_id):
+			raise TemplateIDExists(template_id, common_template_folder.path)
+
+		course_template_folder.add_template_from_files(template_id, files)
+
 	def get_template_filelist(self, courseid, template_id):
 		""" Returns a flattened version of all the files inside the task directory, excluding the files task.* and hidden files.
 			It returns a list of tuples, of the type (Integer Level, Boolean IsDirectory, String Name, String CompleteName)
 		"""
-		template_fs = self.get_template_fs(courseid, template_id)
-		if template_fs is None:
+		template = self.get_template(courseid, template_id)
+		if template is None:
 			return []
+
+		template_fs = template.fs
 
 		tmp_out = {}
 		entries = template_fs.list(True, True, True)
@@ -297,9 +360,9 @@ class TemplatesList(TemplateManagerPage):
 				template_id = request.form.get("template_id", None)
 
 				try:
-					template_folder = self._template_manager_singleton.get_course_template_folder("$common" if is_public else courseid, ensure_exists=True)
-					template_folder.add_template_from_files(template_id, files)
-				except TemplateStructureException as e:
+					effective_courseid = "$common" if is_public else courseid
+					self._template_manager_singleton.add_template_from_files(effective_courseid, template_id, files)
+				except (TemplateStructureException, TemplateIDExists) as e:
 					error = str(e)
 			else:
 				error = "No template selected."
@@ -320,18 +383,16 @@ class TemplateEdit(TemplateManagerPage):
 	def GET_AUTH(self, courseid, template_id):
 		self.get_course_and_check_rights(courseid, allow_all_staff=False)
 		course = self.course_factory.get_course(courseid)
-		template_fs = self.get_template_fs(courseid, template_id)
+		template = self._template_manager_singleton.get_template(courseid, template_id)
 		
-		if template_fs is None:
-			return redirect(f'/admin/{courseid}/edit/templates')
-			
-		path = template_fs.prefix
+		if template is None:
+			return redirect(f'/admin/{courseid}/templates')
 		
-		return self.template_helper.render("template_edit.html", 
-		template_folder=utils.PATH_TO_TEMPLATES, 
-		course=course, 
-		template_id=template_id, 
-		file_list=self.get_template_filelist(courseid, template_id))
+		return self.template_helper.render("template_edit.html",
+					template_folder=utils.PATH_TO_TEMPLATES, 
+					course=course, 
+					template_id=template_id,
+					file_list=self._template_manager_singleton.get_template_filelist(courseid, template_id))
 	
 	def POST_AUTH(self, courseid, template_id):
 		return json.dumps({'status': 'ok'})
@@ -504,5 +565,5 @@ class TemplateFiles(TemplateManagerPage):
 		return self.show_tab_file(courseid, template_id)
 
 def templates_menu(course):
-	return ('templates', 'Challenge templates')
+	return ('templates', '<i class="fa fa-regular fa-cube"></i> Challenge templates')
 
