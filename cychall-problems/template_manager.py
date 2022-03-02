@@ -57,8 +57,9 @@ class Template:
 	def name(self):
 		return self._config["name"]
 
-	def get_config(self, option_name):
-		option = self._config.get(option_name, {})
+	def get_option(self, option_name):
+		options = self._config.get("options", {})
+		option = options.get(option_name, {})
 		
 		option_type = option.get("type", None)
 		option_values = option.get("values", None)
@@ -201,8 +202,14 @@ class TemplateManager:
 	def get_template_fs(self, courseid, template_id):
 		return self.get_template(courseid, template_id).fs
 
-	def get_all_templates(self, courseid):
-		common = self._template_folders["$common"].get_all_templates()
+	def get_public_templates(self):
+		return self._template_folders["$common"].get_all_templates()
+
+	def get_all_templates(self, courseid=None):
+		common = self.get_public_templates()
+
+		if courseid is None:
+			return common, []
 
 		try:
 			course_template_folder = self.get_course_template_folder(courseid)

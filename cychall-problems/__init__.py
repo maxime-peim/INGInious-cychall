@@ -103,13 +103,16 @@ class DisplayableCychallProblem(CychallProblem, DisplayableProblem):
 									  header=header)
 
 	@classmethod
-	def show_editbox(cls, template_helper, key, language):
+	def show_editbox(cls, template_helper, key, language, course, taskid):
+		public_templates, course_templates = cls._template_manager_singleton.get_all_templates(course.get_id())
+
 		return template_helper.render("cychall_edit.html",
 									  template_folder=utils.PATH_TO_TEMPLATES,
-									  key=key, exercices_configurations=cls.exercices_configurations)
+									  key=key, public_templates=public_templates,
+									  course_templates=course_templates)
 
 	@classmethod
-	def show_editbox_templates(cls, template_helper, key, language):
+	def show_editbox_templates(cls, template_helper, key, language, course, taskid):
 		return ""
 
 

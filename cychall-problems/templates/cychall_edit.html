@@ -42,19 +42,26 @@
     <div class="col-sm-10">
         <select type="text" class="form-control" id="difficulty-PID" name="problem[PID][difficulty]">
             {% if public_templates %}
-
-            {% endif %}
-
-            {% for exercice_configurations in exercices_configurations.values() %}
-                {% for configuration in exercice_configurations['collection'].values() %}
-                    {% set difficulties = configuration.get('front', {}).get('difficulties', []) %}
+                {% for template in public_templates %}
+                    {% set type, difficulties = template.get_option("difficulties") %}
                     {% for difficulty in difficulties %}
-                        <option value="{{ difficulty }}" class="exercice-{{ configuration['__id'] }}">
+                        <option value="{{ difficulty }}" class="exercice-{{ template.unique_id }}">
                             {{ difficulty }}
                         </option>
                     {% endfor %}
                 {% endfor %}
-            {% endfor %}
+            {% endif %}
+
+            {% if course_templates %}
+                {% for template in course_templates %}
+                    {% set type, difficulties = template.get_option("difficulties") %}
+                    {% for difficulty in difficulties %}
+                        <option value="{{ difficulty }}" class="exercice-{{ template.unique_id }}">
+                            {{ difficulty }}
+                        </option>
+                    {% endfor %}
+                {% endfor %}
+            {% endif %}
         </select>
     </div>
 </div>
