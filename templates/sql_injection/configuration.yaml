@@ -1,7 +1,9 @@
 name: SQL Injection
 options:
   difficulties:
-    - Easy
-    - Medium
-    - Hard
-    - Elite
+    type: select
+    values:
+      - Easy
+      - Medium
+      - Hard
+      - Elite

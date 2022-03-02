@@ -1,7 +1,9 @@
 name: Stack Based - Format string
 options:
   difficulties:
-    - Easy
-    - Medium
-    - Hard
-    - Elite
+    type: select
+    values:
+      - Easy
+      - Medium
+      - Hard
+      - Elite
