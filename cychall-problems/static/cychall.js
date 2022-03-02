@@ -8,8 +8,8 @@ function load_input_cychall(submissionid, key, input) {
 
 function studio_init_template_cychall(well, pid, problem)
 { 
-    if("exercice" in problem) {
-        var exercice_selector = $('#exercice-' + pid, well);
+    if("exercice-path" in problem) {
+        var exercice_selector = $('#exercice-path-' + pid, well);
         exercice_selector.val(problem["exercice"]).change();
 
         studio_update_difficulty();
@@ -24,7 +24,7 @@ function studio_init_template_cychall(well, pid, problem)
 }
 
 function studio_update_difficulty() {
-    var exercice_id = $('select[id^=exercice] :selected').attr('class');
+    var exercice_id = $('select[id^=exercice-path] :selected').attr('class');
     var difficulty_selector = $('select[id^=difficulty]');
     $('option', difficulty_selector).hide();
     difficulty_selector.val([]);
