@@ -38,7 +38,7 @@
 <div class="modal fade" id="uploadFileModal" tabindex="-1" role="dialog" aria-labelledby="uploadFileModalTitle" aria-hidden="true">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
-      <form method="POST" id="uploadTemplate" onsubmit="return check_template_id(event)" enctype="multipart/form-data">
+      <form method="POST" id="uploadTemplate" onsubmit="return check_templateid(event)" enctype="multipart/form-data">
       <div class="modal-header">
         <h5 class="modal-title" id="uploadFileModelTitle">Upload new template</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -47,9 +47,9 @@
       </div>
       <div class="modal-body">
       	<div class="form-group">
-			<label for="template_id">Template id</label>
+			<label for="templateid">Template id</label>
 			<div class="input-name">
-				<input type="text" name="template_id" placeholder="template-id" id="template_id" required>
+				<input type="text" name="templateid" placeholder="template-id" id="templateid" required>
 			</div>
       	</div>
       	
@@ -80,8 +80,8 @@
   	{% if public_templates %}
   		<div class="content list-group list-group-flush">
   		{% for template in public_templates %}
-		  <div id="public_{{template.id}}" class="template handle list-group-item list-group-item-action d-flex">
-	            <div class="template_id">
+		      <div id="public_{{template.id}}" class="template handle list-group-item list-group-item-action d-flex">
+	            <div class="templateid">
 	                <h5>{{ template.name }}</h5>
 	            </div>
 	            {% include "template_buttons.html" %}
@@ -102,8 +102,8 @@
   	{% if course_templates %}
   		<div class="content list-group list-group-flush">
   		{% for template in course_templates %}
-		  <div id="course_{{template.id}}" class="template handle list-group-item list-group-item-action d-flex">
-	            <div class="template_id">
+		      <div id="course_{{template.id}}" class="template handle list-group-item list-group-item-action d-flex">
+	            <div class="templateid">
 	                <h5>{{ template.name }}</h5>
 	            </div>
 	            {% include "template_buttons.html" %}
@@ -134,7 +134,7 @@
 	                <button class="btn btn-danger submit" name="delete" >{{ _("Delete template") }}</button>
 	            </div>
 		    </div>
-		    <input class="template_id" name="template_id" type="hidden"></input>
+		    <input class="templateid" name="templateid" type="hidden"></input>
         </form>
     </div>
 </div>

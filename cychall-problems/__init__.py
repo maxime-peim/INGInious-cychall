@@ -67,6 +67,6 @@ def init(plugin_manager, course_factory, client, plugin_config):
 	course_factory.get_task_factory().add_problem_type(pages.problem.DisplayableCychallProblem)
 	
 	plugin_manager.add_page('/admin/<courseid>/templates', pages.template.TemplatesList.as_view('templates'))
-	plugin_manager.add_page('/admin/<courseid>/edit/templates/<template_id>', pages.template.TemplateEdit.as_view('template_edit'))
-	plugin_manager.add_page('/admin/<courseid>/edit/templates/<template_id>/files', pages.template.TemplateFiles.as_view('template_files'))
+	plugin_manager.add_page('/admin/<courseid>/templates/edit/<templateid>', pages.template.TemplateEdit.as_view('template_edit'))
+	plugin_manager.add_page('/admin/<courseid>/templates/edit/<templateid>/files', pages.template.TemplateFiles.as_view('template_files'))
 	plugin_manager.add_hook('course_admin_menu', pages.template.templates_menu)

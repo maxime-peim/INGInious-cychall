@@ -28,21 +28,21 @@ class TemplatesList(TemplateManagerPage):
 			files = request.files.getlist("file")
 			if files:
 				is_public = request.form.get("public", False)
-				template_id = request.form.get("template_id", None)
+				templateid = request.form.get("templateid", None)
 
 				try:
 					effective_courseid = "$common" if is_public else courseid
-					self._template_manager_singleton.add_template_from_files(effective_courseid, template_id, files)
+					self._template_manager_singleton.add_template_from_files(effective_courseid, templateid, files)
 				except (TemplateStructureException, TemplateIDExists) as e:
 					error = str(e)
 			else:
 				error = "No template selected."
 		
 		elif "delete" in request.form:
-			template_id = request.form.get("template_id", None)
+			templateid = request.form.get("templateid", None)
 			try:
 				template_folder = self._template_manager_singleton.get_course_template_folder(courseid)
-				template_folder.delete_template(template_id)
+				template_folder.delete_template(templateid)
 			except Exception as e:
 				error = str(e)
 		

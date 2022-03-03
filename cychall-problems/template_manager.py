@@ -12,8 +12,8 @@ class TemplateStructureException(Exception):
 class TemplateIDExists(Exception):
 	""" Helper exception raised when a template id already exists. """
 	
-	def __init__(self, template_id, path):
-		self.message = f"{template_id} already in used in {path}."
+	def __init__(self, templateid, path):
+		self.message = f"{templateid} already in used in {path}."
 		super().__init__(self.message)
 
 
@@ -106,11 +106,11 @@ class Template:
 	
 
 	@classmethod
-	def validation_from_files(cls, template_id, files):
+	def validation_from_files(cls, templateid, files):
 		""" Check whether template's files have the valid structure on upload. """
 
-		if not id_checker(template_id):
-			raise TemplateStructureException(f"Template id {template_id} is not valid.")
+		if not id_checker(templateid):
+			raise TemplateStructureException(f"Template id {templateid} is not valid.")
 		
 		configuration_correct = False
 		for file in files:
@@ -149,17 +149,17 @@ class TemplatesFolder:
 	def path(self):
 		return self._path
 
-	def add_template_from_files(self, template_id, files):
+	def add_template_from_files(self, templateid, files):
 		# Check if the template id is available in the folder
-		if template_id in self._templates:
-			raise TemplateIDExists(template_id, self._path)
+		if templateid in self._templates:
+			raise TemplateIDExists(templateid, self._path)
 		
 		# Check if the files have the right structure
 		# let the exception be propagated
-		Template.validation_from_files(template_id, files)
+		Template.validation_from_files(templateid, files)
 
 		# if all is good, copy files
-		template_fs = self._fs.from_subfolder(template_id)
+		template_fs = self._fs.from_subfolder(templateid)
 		template_fs.ensure_exists()
 
 		# TODO: there is surely a better way
@@ -178,18 +178,18 @@ class TemplatesFolder:
 		template = Template(template_fs.prefix)
 		self._templates[template.id] = template
 
-	def template_exists(self, template_id):
-		return template_id in self._templates
+	def template_exists(self, templateid):
+		return templateid in self._templates
 
-	def delete_template(self, template_id):
-		template = self.get_template(template_id)
+	def delete_template(self, templateid):
+		template = self.get_template(templateid)
 		template.delete()
-		del self._templates[template_id]
+		del self._templates[templateid]
 
-	def get_template(self, template_id):
-		if template_id not in self._templates:
-			raise FileNotFoundError(f"Template {template_id} not found in {self._path}.")
-		return self._templates[template_id]
+	def get_template(self, templateid):
+		if templateid not in self._templates:
+			raise FileNotFoundError(f"Template {templateid} not found in {self._path}.")
+		return self._templates[templateid]
 
 	def get_all_templates(self):
 		return self._templates.values()
@@ -225,20 +225,13 @@ class TemplateManager:
 		
 		return self._template_folders[courseid]
 
-	def get_template(self, courseid, template_id):
-		template = None
-
+	def get_template(self, courseid, templateid):
 		try:
 			template_folder = self.get_course_template_folder(courseid)
-			template = template_folder.get_template(template_id)
+			return template_folder.get_template(templateid)
 		except FileNotFoundError:
 			template_folder = self._template_folders["$common"]
-			template = template_folder.get_template(template_id)
-		
-		return template
-
-	def get_template_fs(self, courseid, template_id):
-		return self.get_template(courseid, template_id).fs
+			return template_folder.get_template(templateid)
 
 	def get_public_templates(self):
 		return self._template_folders["$common"].get_all_templates()
@@ -257,7 +250,7 @@ class TemplateManager:
 		
 		return common, course_specific
 
-	def add_template_from_files(self, courseid, template_id, files):
+	def add_template_from_files(self, courseid, templateid, files):
 		# we must not add template with id already in course or common folder
 		# else there can be problem on editing a template since we don't know
 		# if the template is public or course specific.
@@ -265,19 +258,19 @@ class TemplateManager:
 		common_template_folder = self._template_folders["$common"]
 
 		# Check if the template id is available in the folder
-		if course_template_folder.template_exists(template_id):
-			raise TemplateIDExists(template_id, course_template_folder.path)
+		if course_template_folder.template_exists(templateid):
+			raise TemplateIDExists(templateid, course_template_folder.path)
 		
-		if common_template_folder.template_exists(template_id):
-			raise TemplateIDExists(template_id, common_template_folder.path)
+		if common_template_folder.template_exists(templateid):
+			raise TemplateIDExists(templateid, common_template_folder.path)
 
-		course_template_folder.add_template_from_files(template_id, files)
+		course_template_folder.add_template_from_files(templateid, files)
 
-	def get_template_filelist(self, courseid, template_id):
+	def get_template_filelist(self, courseid, templateid):
 		""" Returns a flattened version of all the files inside the task directory, excluding the files task.* and hidden files.
 			It returns a list of tuples, of the type (Integer Level, Boolean IsDirectory, String Name, String CompleteName)
 		"""
-		template = self.get_template(courseid, template_id)
+		template = self.get_template(courseid, templateid)
 		if template is None:
 			return []
 
