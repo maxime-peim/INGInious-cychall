@@ -2,13 +2,13 @@
 {# more information about the licensing of this file. #}
 
 <div class="form-group row">
-    <label for="exercice-path-PID" class="col-sm-2 control-label">Exercice</label>
+    <label for="exercise-selector-PID" class="col-sm-2 control-label">exercise</label>
     <div class="col-sm-10">
-        <select type="text" class="form-control" id="exercice-path-PID" name="problem[PID][exercice-path]">
+        <select type="text" class="form-control" id="exercise-selector-PID" name="problem[PID][exercise-path]" onchange="reload_options('PID')">
             <optgroup label="Public">
                 {% if public_templates %}
                     {% for template in public_templates %}
-                        <option value="{{ template.path }}" class="exercice-{{ template.unique_id }}">
+                        <option value="{{ template.path }}" class="exercise-{{ template.unique_id }}">
                             {{ template.name }}
                         </option>
                     {% endfor %}
@@ -20,7 +20,7 @@
             <optgroup label="Course specific">
                 {% if course_templates %}
                     {% for template in course_templates %}
-                        <option value="{{ template.path }}" class="exercice-{{ template.unique_id }}">
+                        <option value="{{ template.path }}" class="exercise-{{ template.unique_id }}">
                             {{ template.name }}
                         </option>
                     {% endfor %}
@@ -38,14 +38,13 @@
     </div>
 </div>
 <div class="form-group row">
-    <label for="difficulty-PID" class="col-sm-2 control-label">Difficulty</label>
+    <label for="difficulty-selector-PID" class="col-sm-2 control-label">Difficulty</label>
     <div class="col-sm-10">
-        <select type="text" class="form-control" id="difficulty-PID" name="problem[PID][difficulty]">
+        <select type="text" class="form-control" id="difficulty-selector-PID" name="problem[PID][difficulty]" onchange="reload_options('PID')">
             {% if public_templates %}
                 {% for template in public_templates %}
-                    {% set type, difficulties = template.get_option("difficulties") %}
-                    {% for difficulty in difficulties %}
-                        <option value="{{ difficulty }}" class="exercice-{{ template.unique_id }}">
+                    {% for difficulty in template.difficulties %}
+                        <option value="{{ difficulty }}" class="exercise-{{ template.unique_id }}">
                             {{ difficulty }}
                         </option>
                     {% endfor %}
@@ -54,14 +53,17 @@
 
             {% if course_templates %}
                 {% for template in course_templates %}
-                    {% set type, difficulties = template.get_option("difficulties") %}
-                    {% for difficulty in difficulties %}
-                        <option value="{{ difficulty }}" class="exercice-{{ template.unique_id }}">
+                    {% for difficulty in template.difficulties %}
+                        <option value="{{ difficulty }}" class="exercise-{{ template.unique_id }}">
                             {{ difficulty }}
                         </option>
                     {% endfor %}
                 {% endfor %}
             {% endif %}
         </select>
+    </div>
+</div>
+<div class="form-group row">
+    <div role="tabpanel" class="tab-pane show active upload-area" id="exercise-options-PID">
     </div>
 </div>

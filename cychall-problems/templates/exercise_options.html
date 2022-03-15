@@ -1,0 +1,23 @@
+{# This file is part of INGInious. See the LICENSE and the COPYRIGHTS files for #}
+{# more information about the licensing of this file. #}
+<div role="tabpanel" class="tab-pane show active upload-area" id="exercise-options-{{PID}}">
+{% if exercise_options %}
+    <h5>Options</h5>
+    <table class="table table-sm">
+        {% for id, label, type in exercise_options %}
+            <tr>
+                <td>
+                    <label for="{{id}}">{{label}}</label>
+                </td>
+                <td>
+                    {% if type == 'input' %}
+                        <input type="text" id="{{id}}-{{PID}}" name="problem[{{PID}}][options][{{id}}]">
+                    {% elif type == 'checkbox' %}
+                        <input type="checkbox" id="{{id}}-{{PID}}" name="problem[{{PID}}][options][{{id}}]">
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+{% endif %}
+</div>
