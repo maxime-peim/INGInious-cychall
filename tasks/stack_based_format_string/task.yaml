@@ -1,0 +1,27 @@
+accessible: true
+author: ''
+categories: []
+contact_url: ''
+context: ''
+environment_id: cychall-binary
+environment_parameters:
+    limits:
+        time: '3600'
+        hard_time: ''
+        memory: '100'
+    network_grading: 'on'
+    ssh_allowed: 'on'
+    run_cmd: ''
+environment_type: kata
+evaluate: best
+file: ''
+groups: false
+input_random: '0'
+name: Stack Based - Format String
+network_grading: false
+problems: {}
+stored_submissions: 0
+submission_limit:
+    amount: -1
+    period: -1
+weight: 1.0
