@@ -1,12 +1,13 @@
 #!/bin/bash
 
-next_user = get-config "next-user"
-difficulty = get-config "difficulty"
+next_user=$(get-step-config "next-user")
+difficulty=$(get-step-config "difficulty")
 
 # Parse the template and compile the challenge
 parse-template "challenge.tpl" -o "challenge.c"
+gcc challenge.c -Wall -o challenge
 
-chown $next_user challenge
+chown "$next_user" challenge
 chmod 000 challenge.c
 chmod 550 challenge
 chmod u+s challenge
