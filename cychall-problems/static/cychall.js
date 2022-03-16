@@ -7,10 +7,10 @@ function load_input_cychall(submissionid, key, input) {
 }
 
 function studio_init_template_cychall(well, pid, problem)
-{ 
-    if("exercise" in problem) {
+{
+    if("exercise-path" in problem) {
         var exercise_selector = $('#exercise-selector-' + pid, well);
-        exercise_selector.val(problem["exercise"]).change();
+        exercise_selector.val(problem["exercise-path"]).change();
 
         studio_update_difficulty();
         exercise_selector.change(studio_update_difficulty);
