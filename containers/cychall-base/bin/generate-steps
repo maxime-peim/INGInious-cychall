@@ -7,16 +7,18 @@
 import os
 import sys
 import argparse
-import cychall_container_api.steps
+import cychall_container_api.config
+import cychall_container_api.steps as steps
 from cychall_container_api.steps import Step, EndStep
+
 
 parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, description='Generate a flag and place it in a file.\n')
 parser.add_argument('--output-dir', help="Where to generate the steps.", type=str, default="/task/student")
-parser.add_argument('--input-dir', help="Where are the setup scripts for the steps.", type=str, default="/task/student/scripts")
 args = parser.parse_args()
 
 # count the number of steps
-number_of_steps = cychall_container_api.steps.count_steps(args.input_dir)
+steps_configuration = cychall_container_api.config.get_config("steps")
+number_of_steps = len(steps_configuration)
 
 try:
     # steps and users associated need to be generated from last to first
@@ -25,12 +27,14 @@ try:
 
     # generate each step
     for stepi in range(number_of_steps, 0, -1):
-        Step(f"step{stepi}", args.input_dir, args.output_dir).build()
+        step_name = f"step{stepi}"
+        step_configuration = steps_configuration.get(step_name, {})
+        Step(step_name, step_configuration, args.output_dir).build()
 
     # set the rights to the output directory to 770 so all step users can access their folder
-    cychall_container_api.steps.fix_output_directory_permissions(args.output_dir)
+    steps.fix_output_directory_permissions(args.output_dir)
         
-except cychall_container_api.steps.StepGenerationError as sge:
+except steps.StepGenerationError as sge:
     sys.stderr.buffer.write(str(sge).encode())
     sys.exit(2)
 
