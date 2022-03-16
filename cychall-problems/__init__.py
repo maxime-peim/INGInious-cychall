@@ -3,9 +3,10 @@
 # This file is part of INGInious. See the LICENSE and the COPYRIGHTS files for
 # more information about the licensing of this file.
 
-import os
 import json
 import yaml
+
+from inginious.common.base import get_json_or_yaml
 
 from . import constants, pages
 from .template_manager import TemplateManager
@@ -16,40 +17,35 @@ __version__ = "0.1.dev0"
 def generate_task_steps(course, taskid, task_data, task_fs):
     subproblems = task_data['problems']
 
-    if any(subproblem["type"] == "cychall" for subproblem in subproblems.values()) and \
-        not all(subproblem["type"] == "cychall" for subproblem in subproblems.values()):
-        return json.dumps({"status": "error", "message": "There is at least one sub-problem of type cychall, all must be."})
+    is_there_cychall = any(subproblem["type"] == "cychall" for subproblem in subproblems.values())
+    is_all_cychall = all(subproblem["type"] == "cychall" for subproblem in subproblems.values())
 
-    # task_fs.delete()
-
-    n_steps = len(subproblems)
-    if n_steps == 0:
+    if not is_there_cychall:
         return
-
-    task_configuration = {}
-
-    scripts_fs = task_fs.from_subfolder("student/scripts")
-    scripts_fs.ensure_exists() # Create scripts dir
     
+    elif not is_all_cychall:
+        return json.dumps({"status": "error", "message": "There is at least one sub-problem of type cychall, all must be."})
+    
+    task_fs.delete()
+    student_fs = task_fs.from_subfolder("student")
+    scripts_fs = student_fs.from_subfolder("scripts")
+    scripts_fs.ensure_exists()
+
+    task_configuration = {"steps": {}}
     for stepi, subproblem in enumerate(subproblems.values(), start=1):
-        exercise_path = subproblem["exercise-path"]
-        to_modify = subproblem.get("modify", False)
-        is_local = exercise_path.startswith(scripts_fs.prefix)
+        step_name = f"step{stepi}"
+        step_fs = student_fs.from_subfolder(step_name)
+        step_fs.copy_to(subproblem["exercise-path"])
 
-        if to_modify and not is_local:
-            local_exercise_fs = scripts_fs.from_subfolder(os.path.basename(exercise_path))
-            if not local_exercise_fs.exists():
-                local_exercise_fs.ensure_exists()
-                local_exercise_fs.copy_to(exercise_path)
-            exercise_path = local_exercise_fs.prefix
-
-        task_configuration[f"step{stepi}"] = {
-            "exercise-path": exercise_path,
+        task_configuration["steps"][step_name] = {
             "difficulty": subproblem["difficulty"],
             "next-user": f"step{stepi+1}" if stepi < len(subproblems) else "end"
         }
+
+    yaml_content = get_json_or_yaml("build.yaml", task_configuration)
     
-    task_fs.put("build.yaml", yaml.safe_dump(task_configuration))
+    scripts_fs.put("build.yaml", yaml_content)
+
     task_fs.put("run", constants.DEFAULT_RUN)
 
 
