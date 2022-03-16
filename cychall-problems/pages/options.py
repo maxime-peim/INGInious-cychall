@@ -13,11 +13,11 @@ def check_option_format(option_dict):
 
 class ExerciseConfigurationOptions(INGIniousAdminPage, TemplateManagerHandler):
     
-    def GET_AUTH(self, courseid, taskid):  # pylint: disable=arguments-differ
+    def POST_AUTH(self, courseid, taskid):  # pylint: disable=arguments-differ
 
         self.get_course_and_check_rights(courseid, allow_all_staff=False)
 
-        user_input = request.args
+        user_input = request.form
         if user_input.get('problem_id') is not None and user_input.get('difficulty') is not None and user_input.get('exercise-path') is not None:
             templateid = os.path.basename(user_input.get('exercise-path'))
             exercise_options_elements = self._template_manager.get_template(courseid, templateid).elements

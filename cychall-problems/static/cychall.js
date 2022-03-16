@@ -117,16 +117,15 @@ function open_delete_modal(button) {
 function reload_options(problem_id){
     var difficulty = $("#difficulty-selector-" + problem_id).val();
     var exercise_path = $("#exercise-selector-" + problem_id).val();
-    studio_update_exercise_options({"problem_id": problem_id, "difficulty": difficulty, "exercise-path": exercise_path}, "GET");
+    studio_update_exercise_options({"problem_id": problem_id, "difficulty": difficulty, "exercise-path": exercise_path});
 }
 
 
 function studio_update_exercise_options(data, method)
 {
     if(data == undefined)
-        data = {};
-    if(method == undefined)
-        method = "GET";
+        return;
+    
     var problem_id = data["problem_id"];
     $.ajax({
         success:    function(data)
@@ -135,7 +134,7 @@ function studio_update_exercise_options(data, method)
                         console.log($("#exercise-options-" + problem_id));
                         $("#exercise-options-" + problem_id).html(data);
                     },
-        method:     method,
+        method:     method == undefined ? "POST" : method,
         data:       data,
         url:        location.pathname + "/exercise_options"
     });
