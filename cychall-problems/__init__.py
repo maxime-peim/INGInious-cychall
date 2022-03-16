@@ -38,6 +38,7 @@ def generate_task_steps(course, taskid, task_data, task_fs):
         step_fs.copy_to(subproblem["exercise-path"])
 
         task_configuration["steps"][step_name] = {
+            **(subproblem.get("options", {})),
             "difficulty": subproblem["difficulty"],
             "next-user": f"step{stepi+1}" if stepi < len(subproblems) else "end"
         }
