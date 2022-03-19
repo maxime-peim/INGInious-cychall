@@ -1,5 +1,5 @@
 name: Command injection
-front:
+options:
     difficulties:
         - Easy
         - Medium
@@ -33,12 +33,9 @@ front:
         - id: radio_test
           label: Radio buttons
           type: radio
-          default: pp
+          default: ee
           buttons:
             - id: ee
               label: eee
             - id: rr
               label: eee
-back:
-    build_command: ''
-    build_script: ''

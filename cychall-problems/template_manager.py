@@ -93,7 +93,7 @@ class Template:
             # a configuration file is mandatory in the folder
             config = load_json_or_yaml(configuration_path)
             # load the options
-            self._options = config.get("front", {})
+            self._options = config.get("options", {})
             # and the mandatory template name
             self._name = config.get("name", None)
         except Exception:

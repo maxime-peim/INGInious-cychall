@@ -1,5 +1,5 @@
 name: Stack Based - Format string
-front:
+options:
     difficulties:
         - Easy
         - Medium
@@ -39,6 +39,3 @@ front:
               label: eee
             - id: rr
               label: eee
-back:
-    build_command: ''
-    build_script: ''
