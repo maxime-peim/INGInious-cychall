@@ -110,7 +110,6 @@ class Step:
         self._create_associated_user()
 
         setup_command = self._detect_script_command("setup")
-        post_command = self._detect_script_command("post")
 
         self._write_step_config()
         
@@ -118,9 +117,6 @@ class Step:
             inginious_container_api.utils.execute_process(setup_command, user=utils.get_username(), cwd=self._step_folder)
 
         # self._set_default_permissions()
-
-        if post_command is not None:
-            inginious_container_api.utils.execute_process(post_command, user=utils.get_username(), cwd=self._step_folder)
 
         self._clean_files()
 
