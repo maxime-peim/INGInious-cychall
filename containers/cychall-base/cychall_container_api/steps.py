@@ -16,12 +16,15 @@ def _load_step_config():
     with open(_step_configuration_filename, 'r') as step_in:
         return yaml.safe_load(step_in)
 
-def get_config(field_name):
+def get_config(field_name=None):
     """" Returns the specified problem answer in the form 
          problem: problem id
          Returns string, or bytes if a file is loaded
     """
     configuration = _load_step_config()
+    if field_name is None:
+        return configuration
+    
     field_split = field_name.split(":")
     step_configuration = configuration[field_split[0]]
     if isinstance(step_configuration, dict) and "filename" in step_configuration and "value" in step_configuration:

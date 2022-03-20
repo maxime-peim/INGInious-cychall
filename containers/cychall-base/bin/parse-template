@@ -6,25 +6,32 @@
 #
 # Tool to import answer from standard input to the template files given in arguments
 
+import os
 import sys
 import argparse
-import cychall_container_api.input
+from jinja2 import Environment, FileSystemLoader
+from jinja2.utils import pass_context
+
+import cychall_container_api.steps as steps
 
 parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, 
                                  description='Parse the template file and generate an output file.',
                                  epilog='Input data must have been passed through INGInious program.')
 parser.add_argument('-o', '--output', help="Output filename", default="")
-parser.add_argument('-c', '--command', help="Command to compile. (For hidden values)", default="")
 parser.add_argument('input', help="Input filename")
 args = parser.parse_args()
 
 outfile = args.output
-command = args.command
 infile = args.input
+
+step_configuration = steps.get_config()
+env = Environment(loader = FileSystemLoader(os.path.dirname(os.path.abspath(infile))), trim_blocks=True, lstrip_blocks=True)
+template = env.get_template(os.path.basename(infile))
 
 # Do the real job
 try:
-    cychall_container_api.input.parse_template(infile, outfile, command)
+    with open(outfile, "w") as out:
+        out.write(template.render(options=step_configuration))
 except IOError as e:
     sys.stderr.write("Error: " + str(e))
     sys.exit(2)

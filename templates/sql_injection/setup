@@ -1,8 +1,19 @@
 #!/bin/bash
 
+next_user=$(get-step-config "next-user")
+difficulty=$(get-step-config "difficulty")
+
 python3 database_gen.py
 
 # Parse the template and compile the challenge
-parse-template template.c \
-            -c "gcc challenge.c -Wall -o challenge -l sqlite3" \
-            -o challenge.c
+parse-template challenge.j2 -o challenge.c
+gcc challenge.c -Wall -o challenge -l sqlite3
+
+chgrp -R worker .
+chown "$next_user" challenge database.db
+chmod 440 challenge.c
+chmod 400 database.db
+chmod 550 challenge
+chmod u+s challenge
+
+chmod g+x .

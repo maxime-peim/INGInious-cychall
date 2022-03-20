@@ -1,9 +1,0 @@
-#!/bin/bash
-
-chown {{next_user}} challenge database.db
-chmod 440 challenge.c
-chmod 400 database.db
-chmod 550 challenge
-chmod u+s challenge
-
-chmod g+x .

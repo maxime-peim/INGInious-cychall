@@ -2,7 +2,7 @@
 #include <unistd.h>
  
 int main(int argc, char *argv[]){
-        FILE *secret = fopen("/task/student/end/flag", "rt");
+        FILE *secret = fopen("/task/student/{{ options["next-user"] }}/flag", "rt");
         char buffer[256];
         fgets(buffer, sizeof(buffer), secret);
         printf(argv[1]);

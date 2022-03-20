@@ -20,7 +20,7 @@ void check_identity(unsigned int size)
 
 int main()
 {
-    check_identity(@buffer_size = random_integer(low=100,high=500)@);
+    check_identity({{ range(100, 501) | random }});
 
     return 0;
 }
