@@ -1,0 +1,13 @@
+#!/bin/bash
+# Basic program wrapper using the return value
+
+{% if command %}
+{{ command }}
+{% endif %}
+
+if [ $? -eq 0 ]; 
+then 
+    echo "$CMD executed successfully" 
+else 
+    echo "$CMD terminated unsuccessfully" 
+fi
