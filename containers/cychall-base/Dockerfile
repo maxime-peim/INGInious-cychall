@@ -14,3 +14,5 @@ RUN     chmod -R 644 /INGInious-cychall/cychall_container_api && \
         echo "cychall_container_api" > /usr/lib/python3.8/site-packages/cychall_container_api.pth
 
 RUN     rm -R /INGInious-cychall
+
+RUN     python3 -m pip install jinja2-ansible-filters
