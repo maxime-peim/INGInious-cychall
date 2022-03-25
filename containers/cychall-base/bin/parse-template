@@ -6,13 +6,8 @@
 #
 # Tool to import answer from standard input to the template files given in arguments
 
-import os
-import sys
 import argparse
-from jinja2 import Environment, FileSystemLoader
-from jinja2.utils import pass_context
-
-import cychall_container_api.steps as steps
+import cychall_container_api.utils as utils
 
 parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, 
                                  description='Parse the template file and generate an output file.',
@@ -24,17 +19,4 @@ args = parser.parse_args()
 outfile = args.output
 infile = args.input
 
-step_configuration = steps.get_config()
-env = Environment(loader = FileSystemLoader(os.path.dirname(os.path.abspath(infile))), trim_blocks=True, lstrip_blocks=True)
-template = env.get_template(os.path.basename(infile))
-
-# Do the real job
-try:
-    with open(outfile, "w") as out:
-        out.write(template.render(options=step_configuration))
-except IOError as e:
-    sys.stderr.write("Error: " + str(e))
-    sys.exit(2)
-except ValueError as e:
-    sys.stderr.write("Input is not compatible")
-    sys.exit(2)
+utils.parse_template(outfile=outfile, infile=infile)

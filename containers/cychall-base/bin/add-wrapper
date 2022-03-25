@@ -6,21 +6,17 @@
 #
 # Tool to import answer from standard input to the template files given in arguments
 
-import os
-import sys
-import argparse
-from jinja2 import Environment, FileSystemLoader
-from jinja2.utils import pass_context
 
-import cychall_container_api.steps as steps
+import argparse
+import cychall_container_api.utils as utils
 
 parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, 
                                  description='Add wrapper to executable.',
                                  epilog='Input data must have been passed through INGInious program.')
-parser.add_argument('executable', help="Input filename", required=True)
-parser.add_argument('-o', '--output', help="Output filename", default="", required=True)
-parser.add_argument('-w', '--wrapper', help="Wrapper name", required=True)
-parser.add_argument('-c', '--command', help="Custom executable start command", default=None, required=False)
+parser.add_argument('executable', help="Input filename")
+parser.add_argument('-o', '--output', help="Output filename", default="")
+parser.add_argument('-w', '--wrapper', help="Wrapper name")
+parser.add_argument('-c', '--command', help="Custom executable start command", default=None)
 args = parser.parse_args()
 
 outfile = args.output
@@ -28,19 +24,4 @@ program = args.executable
 wrapper_file = args.wrapper
 command = args.command
 
-step_configuration = steps.get_config()
-env = Environment(loader = FileSystemLoader(os.path.join('/', 'bin', 'ingi-wrappers')), trim_blocks=True, lstrip_blocks=True)
-template = env.get_template(os.path.basename(wrapper_file))
-
-if command is None:
-    command = "./" + program
-
-try:
-    with open(outfile, "w") as out:
-        out.write(template.render(executable=program, command=command, options=step_configuration))
-except IOError as e:
-    sys.stderr.write("Error: " + str(e))
-    sys.exit(2)
-except ValueError as e:
-    sys.stderr.write("Input is not compatible")
-    sys.exit(2)
+utils.add_wrapper(outfile=outfile, executable=program, wrapper_name=wrapper_file, command=command)

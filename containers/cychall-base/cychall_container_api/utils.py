@@ -6,7 +6,9 @@ import grp
 import hashlib
 import pwd
 
+from jinja2 import Environment, FileSystemLoader
 import inginious_container_api.utils
+import cychall_container_api.steps as steps
 
 def extract_value(direct_value, value_path):
     if direct_value is not None:
@@ -103,3 +105,70 @@ def get_all_parts_path(path):
     
     parts.append(head or tail)
     return parts[::-1]
+
+def get_wrapper(name):
+    wrappers = get_directory_content(os.path.join('/', 'bin', 'ingi-wrappers'))
+    for w in wrappers:
+        if w == name:
+            return os.path.join('/', 'bin', 'ingi-wrappers', name)
+        elif os.path.splitext(w)[0] == name:
+            return os.path.join('/', 'bin', 'ingi-wrappers', w)
+
+def add_wrapper(outfile, executable, wrapper_name, command=None):
+    step_configuration = steps.get_config()
+    wrapper_path = get_wrapper(wrapper_name)
+
+    if wrapper_path is None:
+        sys.stderr.write("Invalid wrapper name")
+        sys.exit(2)
+
+    env = Environment(loader = FileSystemLoader(os.path.dirname(wrapper_path)), trim_blocks=True, lstrip_blocks=True)
+    template = env.get_template(os.path.basename(wrapper_path))
+
+    if command is None:
+        command = "./" + executable
+
+    try:
+        wrapper_file = os.path.basename(wrapper_path)
+        with open(wrapper_file, "w") as out:
+            out.write(template.render(executable=executable, command=command, options=step_configuration))
+
+        if os.path.splitext(wrapper_file)[1] == ".c": # compile, then delete file
+            compile_gcc(wrapper_file, outfile, remove_source=True)
+
+    except IOError as e:
+        sys.stderr.write("Error: " + str(e))
+        sys.exit(2)
+    except ValueError as e:
+        sys.stderr.write("Input is not compatible")
+        sys.exit(2)
+
+def parse_template(outfile, infile):
+    step_configuration = steps.get_config()
+    env = Environment(loader = FileSystemLoader(os.path.dirname(os.path.abspath(infile))), trim_blocks=True, lstrip_blocks=True)
+    template = env.get_template(os.path.basename(infile))
+
+    # Do the real job
+    try:
+        with open(outfile, "w") as out:
+            out.write(template.render(options=step_configuration))
+    except IOError as e:
+        sys.stderr.write("Error: " + str(e))
+        sys.exit(2)
+    except ValueError as e:
+        sys.stderr.write("Input is not compatible")
+        sys.exit(2)
+
+def compile_gcc(c_file, outfile, command=None, remove_source=False):
+    if not os.path.isfile(c_file):
+        sys.stderr.write("Input file does not exist.")
+        sys.exit(2)
+
+    if command is None:
+        os.system(f"gcc -o {outfile} {c_file}")
+    else:
+        os.system(command)
+    
+    if remove_source:
+        os.remove(c_file)
+        
