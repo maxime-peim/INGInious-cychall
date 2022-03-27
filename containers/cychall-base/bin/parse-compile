@@ -33,5 +33,11 @@ temp_c_file = outfile + ".c"
 utils.parse_template(outfile=temp_c_file, infile=infile) # j2 to c
 utils.compile_gcc(c_file=temp_c_file, outfile=outfile, command=compile) # Compile c
 
-if mode is not None:
+with open("temp.txt", "w") as temp:
+    if mode is None:
+        temp.write("NONE")
+    else:
+        temp.write(mode)
+
+if mode is not None and mode != "custom":
     utils.add_wrapper(outfile="start", executable=outfile, wrapper_name=mode, command=start) # Add wrapper and compile

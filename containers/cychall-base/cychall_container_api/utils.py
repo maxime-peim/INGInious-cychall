@@ -5,6 +5,7 @@ import shlex
 import grp
 import hashlib
 import pwd
+import stat
 
 from jinja2 import Environment, FileSystemLoader
 import inginious_container_api.utils
@@ -83,6 +84,11 @@ def get_directory_content(path):
 def get_username():
     return pwd.getpwuid(os.getuid()).pw_name
 
+def get_uid(username):
+    return pwd.getpwnam(username).pw_uid
+
+def get_gid(group_name):
+    return grp.getgrnam(group_name).gr_gid
 
 def remove_files(paths):
     for path in paths:
@@ -135,6 +141,15 @@ def add_wrapper(outfile, executable, wrapper_name, command=None):
 
         if os.path.splitext(wrapper_file)[1] == ".c": # compile, then delete file
             compile_gcc(wrapper_file, outfile, remove_source=True)
+        
+        next_user_uid = get_uid(step_configuration['next-user'])
+        worker_group_gid = get_gid("worker")
+
+        os.chown(outfile, next_user_uid, worker_group_gid)
+        subprocess.call(["chmod", "4710", outfile])
+
+        os.chown(executable, next_user_uid, worker_group_gid)
+        os.chmod(executable, 0o700)
 
     except IOError as e:
         sys.stderr.write("Error: " + str(e))
@@ -166,8 +181,15 @@ def compile_gcc(c_file, outfile, command=None, remove_source=False):
 
     if command is None:
         os.system(f"gcc -o {outfile} {c_file}")
+        #stdout, stderr = inginious_container_api.utils.execute_process( ["gcc", "-o", outfile, c_file], internal_command=True, cwd=os.getcwd(), user=pwd.getpwuid(os.getuid()).pw_name)
     else:
         os.system(command)
+        #stdout, stderr = inginious_container_api.utils.execute_process(command.split(), internal_command=True, cwd=os.getcwd(), user=pwd.getpwuid(os.getuid()).pw_name)
+    
+    """if stderr != "":
+        sys.stderr.buffer.write(b'An error occured while compiling:\n')
+        sys.stderr.buffer.write(stderr)
+        sys.exit(2)"""
     
     if remove_source:
         os.remove(c_file)

@@ -5,13 +5,20 @@
 
 import json
 import yaml
+import os
 
-from inginious.common.base import get_json_or_yaml
+from inginious.common.base import get_json_or_yaml, load_json_or_yaml
 
 from . import constants, pages
 from .template_manager import TemplateManager
 
 __version__ = "0.1.dev0"
+
+def load_build_config(task_fs):
+    scripts_fs = task_fs.from_subfolder("student/scripts")
+    if scripts_fs.exists("build.yaml"):
+        build_config = load_json_or_yaml(os.path.join(scripts_fs.prefix, "build.yaml"))
+        return build_config
 
 
 def generate_task_steps(course, taskid, task_data, task_fs):
@@ -26,6 +33,10 @@ def generate_task_steps(course, taskid, task_data, task_fs):
     elif not is_all_cychall:
         return json.dumps({"status": "error", "message": "There is at least one sub-problem of type cychall, all must be."})
     
+    original_build_config = load_build_config(task_fs)
+    if original_build_config is not None: # Compare configs and replace different elements
+        pass
+
     task_fs.delete()
     student_fs = task_fs.from_subfolder("student")
     scripts_fs = student_fs.from_subfolder("scripts")
@@ -36,9 +47,10 @@ def generate_task_steps(course, taskid, task_data, task_fs):
         step_name = f"step{stepi}"
         step_fs = student_fs.from_subfolder(step_name)
         step_fs.copy_to(subproblem["exercise-path"])
-
+        print(subproblem)
         task_configuration["steps"][step_name] = {
             **(subproblem.get("options", {})),
+            "step-switch": subproblem["step-switch"],
             "difficulty": subproblem["difficulty"],
             "next-user": f"step{stepi+1}" if stepi < len(subproblems) else "end"
         }

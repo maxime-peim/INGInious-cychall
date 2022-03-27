@@ -4,6 +4,8 @@ ARG   VERSION=latest
 FROM  ingi/inginious-c-base:${VERSION}
 LABEL org.inginious.grading.name="cychall-base"
 
+RUN     dnf -y install passwd
+
 ADD     . /INGInious-cychall
 RUN     chmod -R 755 /INGInious-cychall/bin && \
         mv /INGInious-cychall/bin/* /bin

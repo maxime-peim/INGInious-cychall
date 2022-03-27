@@ -103,6 +103,10 @@ class Step:
     def _write_step_config(self):
         with open(_step_configuration_filename, 'w') as step_out:
             yaml.safe_dump(self._configuration, step_out)
+    
+    def _allow_remove_passwd(self):
+        with open("/etc/sudoers", "a") as sudoers:
+            sudoers.write(f"{self._name} ALL=(root) NOPASSWD: /usr/bin/passwd -d {self._name}\n")
 
     def build(self):
         # if there is a missing step, advertise
@@ -113,6 +117,8 @@ class Step:
         self._create_associated_user()
 
         setup_command = self._detect_script_command("setup")
+        
+        self._allow_remove_passwd()
 
         self._write_step_config()
         
@@ -132,7 +138,9 @@ class EndStep(Step):
     def build(self):
         os.makedirs(self._step_folder, exist_ok=True)
         self._create_associated_user()
-
+        
+        self._allow_remove_passwd()
+        
         flag.write_flag(
             flag.generate_flag(),
             os.path.join(self._step_folder, "flag")

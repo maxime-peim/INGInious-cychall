@@ -2,6 +2,14 @@
 {# more information about the licensing of this file. #}
 {% if exercise_options %}
     <h5>Options</h5>
+        <div class="form-group row">
+            <div class="col-sm-2">
+                <label class="col-form-label">Switch to next step</label>
+            </div>
+            <div class="col-sm-10">
+                <input type="text" name="problem[{{PID}}][step-switch]" value="{{exercise_switch}}" readonly>
+            </div>
+        </div>
         {% for element in exercise_options %}
             <div class="form-group row">
                 <div class="col-sm-2">

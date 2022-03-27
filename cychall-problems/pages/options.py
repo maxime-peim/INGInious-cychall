@@ -21,7 +21,8 @@ class ExerciseConfigurationOptions(INGIniousAdminPage, TemplateManagerHandler):
         if user_input.get('problem_id') is not None and user_input.get('difficulty') is not None and user_input.get('exercise-path') is not None:
             templateid = os.path.basename(user_input.get('exercise-path'))
             exercise_options_elements = self._template_manager.get_template(courseid, templateid).elements
-            return self.show_exercise_options_tab(user_input.get("problem_id"), exercise_options_elements, user_input.get("difficulty"))
+            exercise_switch = self._template_manager.get_template(courseid, templateid).next_step_switch
+            return self.show_exercise_options_tab(user_input.get("problem_id"), exercise_options_elements, user_input.get("difficulty"), exercise_switch)
         return self.template_helper.render("exercise_options.html", template_folder=constants.PATH_TO_TEMPLATES)
     
     def check_default_attributes(self, element, check_type=True):
@@ -78,10 +79,10 @@ class ExerciseConfigurationOptions(INGIniousAdminPage, TemplateManagerHandler):
                 element_copy.pop(key)
         return element_copy
     
-    def show_exercise_options_tab(self, problem_id, exercise_options_elements, difficulty):
+    def show_exercise_options_tab(self, problem_id, exercise_options_elements, difficulty, exercise_switch):
         options_elements = []
         for element in exercise_options_elements:
             options = self.parse_default_element_option(problem_id, element, difficulty)
             if options is not None:
                 options_elements.append(options)
-        return self.template_helper.render("exercise_options.html", template_folder=constants.PATH_TO_TEMPLATES, exercise_options=options_elements, PID=problem_id)
+        return self.template_helper.render("exercise_options.html", template_folder=constants.PATH_TO_TEMPLATES, exercise_options=options_elements, PID=problem_id, exercise_switch=exercise_switch)
