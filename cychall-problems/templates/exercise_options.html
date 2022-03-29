@@ -21,6 +21,9 @@
                         {% if 'placeholder' in element %}
                             placeholder="{{element['placeholder']}}"
                         {% endif %}
+                        {% if 'value' in element %}
+                            value="{{element['value']}}"
+                        {% endif %}
                         >
                     {% elif element["type"] == 'checkbox' %}
                         <div class="form-check">

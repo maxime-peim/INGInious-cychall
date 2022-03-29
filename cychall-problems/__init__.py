@@ -4,6 +4,7 @@
 # more information about the licensing of this file.
 
 import json
+from pydoc import replace
 import yaml
 import os
 
@@ -28,10 +29,6 @@ def generate_task_steps(course, taskid, task_data, task_fs):
         return json.dumps({"status": "error", "message": "There is at least one sub-problem of type cychall, all must be."})
     
     original_build_config = utils.load_build_config(task_fs)
-    if original_build_config is not None: # Compare configs and replace different elements
-        pass
-
-    task_fs.delete()
     student_fs = task_fs.from_subfolder("student")
     scripts_fs = student_fs.from_subfolder("scripts")
     scripts_fs.ensure_exists()
@@ -40,12 +37,27 @@ def generate_task_steps(course, taskid, task_data, task_fs):
     for stepi, subproblem_id in enumerate(subproblems.keys(), start=1):
         subproblem = subproblems[subproblem_id]
         step_name = f"step{stepi}"
+        template_name = os.path.basename(subproblem["exercise-path"])
         step_fs = student_fs.from_subfolder(step_name)
-        step_fs.copy_to(subproblem["exercise-path"])
+        
+        replace = True
+        # Do not replace files if problemid and templateid are the same as existing build config
+        if original_build_config is not None:
+            if step_name in original_build_config["steps"] and \
+                original_build_config["steps"][step_name].get("problemid", None) == subproblem_id and \
+                original_build_config["steps"][step_name].get("template", None) == template_name:
+                replace = False
+        
+        if replace:
+            step_fs.delete()
+            step_fs.ensure_exists()
+            step_fs.copy_to(subproblem["exercise-path"])
+        
         task_configuration["steps"][step_name] = {
             **(subproblem.get("options", {})),
             "step-switch": subproblem["step-switch"],
             "problemid": subproblem_id,
+            "template": template_name,
             "difficulty": subproblem["difficulty"],
             "next-user": f"step{stepi+1}" if stepi < len(subproblems) else "end"
         }

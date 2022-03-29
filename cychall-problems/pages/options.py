@@ -39,7 +39,7 @@ def parse_element_specific_options(element):
         
         if "default" in element and element["default"] in element["values"]:
             options += ["default"]
-    
+
     elif element["type"] == "radio":
         if "buttons" not in element:
             return None
@@ -92,7 +92,6 @@ class ExerciseConfigurationOptions(INGIniousAdminPage, TemplateManagerHandler):
         current_task_options = self.get_build_options(courseid, taskid, problemid)
         if current_task_options is not None:
             for element in options:
-                print(element["id"], "  ", current_task_options.keys(), element["id"] in current_task_options.keys())
                 if element["id"] in current_task_options.keys():
                     value = current_task_options[element["id"]]
                     if element["type"] == "checkbox" and value == "on":
