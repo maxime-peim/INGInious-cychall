@@ -4,7 +4,6 @@
 # more information about the licensing of this file.
 
 import json
-from pydoc import replace
 import yaml
 import os
 
@@ -49,7 +48,8 @@ def generate_task_steps(course, taskid, task_data, task_fs):
                 replace = False
         
         if replace:
-            step_fs.delete()
+            if step_fs.exists():
+                step_fs.delete()
             step_fs.ensure_exists()
             step_fs.copy_to(subproblem["exercise-path"])
         
