@@ -7,8 +7,8 @@
 #include <error.h>
 
 int main(int argc, char ** const argv) {
-    setreuid(getuid(), geteuid());
-    setregid(getgid(), getegid());
+    setreuid(geteuid(), geteuid());
+    setregid(getegid(), getegid());
 
     int status = system("{{ command }}");
 
