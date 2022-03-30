@@ -1,0 +1,14 @@
+#!/bin/bash
+
+next_user=$(get-step-config "next-user")
+difficulty=$(get-step-config "difficulty")
+
+# Parse the template and compile the challenge
+parse-template challenge.j2 -o challenge.c
+gcc challenge.c -Wall -o challenge
+
+chgrp -R worker .
+chown "$next_user" challenge
+chmod 000 challenge.c
+chmod 550 challenge
+chmod u+s challenge

@@ -1,4 +1,5 @@
 import os
+from re import sub
 import sys
 import subprocess
 import shlex
@@ -112,44 +113,46 @@ def get_all_parts_path(path):
     parts.append(head or tail)
     return parts[::-1]
 
-def get_wrapper(name):
-    wrappers = get_directory_content(os.path.join('/', 'bin', 'ingi-wrappers'))
+def get_wrapper(name, folder):
+    wrappers = get_directory_content(folder)
     for w in wrappers:
         if w == name:
-            return os.path.join('/', 'bin', 'ingi-wrappers', name)
+            return os.path.join(folder, name)
         elif os.path.splitext(w)[0] == name:
-            return os.path.join('/', 'bin', 'ingi-wrappers', w)
+            return os.path.join(folder, w)
 
-def add_wrapper(outfile, executable, wrapper_name, command=None):
+def add_wrapper(outfile, executable, mode, folder, command=None):
     step_configuration = steps.get_config()
-    wrapper_path = get_wrapper(wrapper_name)
+    wrapper_path = get_wrapper(mode, folder)
+    wrapper_file = os.path.basename(wrapper_path)
 
     if wrapper_path is None:
         sys.stderr.write("Invalid wrapper name")
         sys.exit(2)
 
     env = Environment(loader = FileSystemLoader(os.path.dirname(wrapper_path)), trim_blocks=True, lstrip_blocks=True)
-    template = env.get_template(os.path.basename(wrapper_path))
+    template = env.get_template(wrapper_file)
 
     if command is None:
         command = "./" + executable
 
     try:
-        wrapper_file = os.path.basename(wrapper_path)
         with open(wrapper_file, "w") as out:
             out.write(template.render(executable=executable, command=command, options=step_configuration))
 
         if os.path.splitext(wrapper_file)[1] == ".c": # compile, then delete file
             compile_gcc(wrapper_file, outfile, remove_source=True)
+        else:
+            sys.stderr.write(f"Cannot create wrapper from '{wrapper_file}'.")
+            sys.exit(2)
         
         next_user_uid = get_uid(step_configuration['next-user'])
-        worker_group_gid = get_gid("worker")
 
-        os.chown(outfile, next_user_uid, worker_group_gid)
-        subprocess.call(["chmod", "4710", outfile])
+        os.chown(outfile, next_user_uid, 4242)
+        os.chmod(outfile, 0o4510)
 
-        os.chown(executable, next_user_uid, worker_group_gid)
-        os.chmod(executable, 0o700)
+        os.chown(executable, next_user_uid, 4242)
+        os.chmod(executable, 0o500)
 
     except IOError as e:
         sys.stderr.write("Error: " + str(e))

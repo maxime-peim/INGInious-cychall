@@ -1,0 +1,39 @@
+#!/bin/python3
+# -*- coding: utf-8 -*-
+#
+# This file is part of INGInious. See the LICENSE and the COPYRIGHTS files for
+# more information about the licensing of this file.
+#
+# Tool to import answer from standard input to the template files given in arguments
+import os
+import argparse
+import cychall_container_api.utils as utils
+
+parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, 
+                                 description='Parse the template file and generate an output file.',
+                                 epilog='Input data must have been passed through INGInious program.')
+parser.add_argument('-m', '--mode', help="Mode used to switch to next user (direct, password)", default="direct")
+parser.add_argument('-f', '--folder', help="Path to wrapper folder", default="/etc/cychall/wrappers")
+parser.add_argument('-i', '--intermediate-commands', type=str, nargs='+', help="Intermediate compile commands", default=None)
+parser.add_argument('-c', '--command', help="Custom start command", default=None)
+parser.add_argument('input', help="Template filename")
+parser.add_argument('parse_output', help="Parsed template filename")
+parser.add_argument('output', help="Final executable filename")
+args = parser.parse_args()
+
+infile = args.input
+parse_outfile = args.parse_output
+outfile = args.output
+mode = args.mode
+wrapper_folder = args.folder
+intermediates = args.intermediate_commands
+command = args.command
+
+utils.parse_template(outfile=parse_outfile, infile=infile)
+
+if intermediates is not None:
+    for inter_command in intermediates:
+        os.system(inter_command)
+
+if mode is not None:
+    utils.add_wrapper(outfile="wrapped", executable=outfile, mode=mode, folder=wrapper_folder, command=command) # Add wrapper and compile
