@@ -15,21 +15,21 @@ int main(int argc, char ** const argv) {
     char * const __argv[] = {"/bin/bash", "-i", NULL};
 
     if (status != -1) {
-        if (WEXITSTATUS(status)) {
+        if (WIFEXITED(status)) {
             int ret = WEXITSTATUS(status);
 
             if(!ret) {
                 printf("\nStep finished: switching to next user!\n");
-                execv("/bin/bash", __argv);
+                execv(__argv[0], __argv);
             }
             else{
-                printf("\nERROR: An error occurred while trying to switch to next user. Please contact the course administrator.\n");
+                printf("\nFailed to exploit the challenge. returned code: %d\n", ret);
             }
             
             return ret;
         }
         else{
-            printf("\nERROR: An error occurred while trying to switch to next user. Please contact the course administrator.\n");
+            printf("\nERROR: An error occurred while trying to switch to next user. Please contact the course administrator. %d\n", status);
         }
     }
     return status != -1;
