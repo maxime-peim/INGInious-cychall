@@ -16,4 +16,4 @@ parser.add_argument('input', help="Input filename")
 parser.add_argument('output', help="Output filename")
 args = parser.parse_args()
 
-utils.parse_template(outfile=args.input, infile=args.output)
+utils.parse_template(outfile=args.output, infile=args.input)
