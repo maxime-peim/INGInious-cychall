@@ -125,7 +125,7 @@ int main(int argc, char ** const argv) {
     setreuid(geteuid(), geteuid());
     setregid(getegid(), getegid());
 
-    int status = argsystem("{{ command }}", argc - 1, argv + 1);
+    int status = argsystem("{{ command }}", argc - 1, argc == 1 ? NULL : argv + 1);
 
     if (status != -1) {
         if (WIFEXITED(status)) {

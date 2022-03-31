@@ -163,7 +163,7 @@ def add_wrapper(outfile, executable, mode, folder, command=None):
 
 def parse_template(outfile, infile):
     step_configuration = steps.get_config()
-    env = Environment(loader = FileSystemLoader(os.path.dirname(os.path.abspath(infile))), trim_blocks=True, lstrip_blocks=True)
+    env = Environment(loader = FileSystemLoader(os.path.dirname(os.path.abspath(infile))), trim_blocks=True, lstrip_blocks=True, extensions=['jinja2_ansible_filters.AnsibleCoreFiltersExtension'])
     template = env.get_template(os.path.basename(infile))
 
     # Do the real job
