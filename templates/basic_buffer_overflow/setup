@@ -5,9 +5,10 @@ difficulty=$(get-step-config "difficulty")
 
 # Parse the template and compile the challenge
 parse-template challenge.j2 challenge.c
-gcc -Wall challenge.c -o challenge
+gcc challenge.c -Wall -o challenge -fno-stack-protector
 
 chown -R "$next_user" .
 chgrp -R worker .
-chmod 000 challenge.c
-chmod u+s challenge
+chmod 440 challenge.c
+
+add-wrapper challenge
