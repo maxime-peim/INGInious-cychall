@@ -62,11 +62,12 @@ def generate_task_steps(course, taskid, task_data, task_fs):
             "next-user": f"step{stepi+1}" if stepi < len(subproblems) else "end"
         }
     
-    to_delete = [k for k in original_build_config["steps"].keys() if k not in task_configuration["steps"]]
-    for step_name in to_delete:
-        step_fs = student_fs.from_subfolder(step_name)
-        if step_fs.exists():
-            step_fs.delete()
+    if original_build_config is not None:
+        to_delete = [k for k in original_build_config["steps"].keys() if k not in task_configuration["steps"]]
+        for step_name in to_delete:
+            step_fs = student_fs.from_subfolder(step_name)
+            if step_fs.exists():
+                step_fs.delete()
 
     yaml_content = get_json_or_yaml("build.yaml", task_configuration)
     
