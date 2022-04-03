@@ -1,14 +1,10 @@
 import os
-from re import sub
 import sys
-import subprocess
-import shlex
 import grp
-import hashlib
 import pwd
-import stat
 
 from jinja2 import Environment, FileSystemLoader
+
 import inginious_container_api.utils
 import cychall_container_api.steps as steps
 
@@ -28,29 +24,10 @@ def extract_value(direct_value, value_path):
         sys.exit(2)
 
 
-def create_user(name, uid=None, gid=None, home_dir=None, groups=None, create_group=False):
-    create_group |= groups is None
+def create_user(name, uid=None, gid=None, home_dir=None, shell=None, groups=None, create_self_group=False):
     options = [name]
 
-    # create a new group for the user, with the name of the user
-    if gid is not None or create_group:
-        groupadd_options = [] if gid is None else ['--gid', str(gid)]
-        options += ['-g', name]
-        stdout, stderr = inginious_container_api.utils.execute_process(['groupadd', *groupadd_options, name], internal_command=True)
-    else:
-        options += ['-g', groups[0]]
-        groups.pop(0)
-
-    # if stderr != "":
-    #     sys.stderr.buffer.write(b'An error occured while adding a new user group:\n')
-    #     sys.stderr.buffer.write(stderr)
-    #     sys.exit(2)
-
-    # create the new user, in his own group
-    if uid is not None:
-        options += ['--uid', str(uid)]
-
-    home_dir = home_dir or f'/task'
+    home_dir = f'/task' if home_dir is None else home_dir
     
     try:
         os.makedirs(home_dir, exist_ok=True)
@@ -60,17 +37,29 @@ def create_user(name, uid=None, gid=None, home_dir=None, groups=None, create_gro
         sys.exit(2)
 
     options += ['--home-dir', home_dir]
+    
+    if create_self_group:
+        options.append('--user-group')
+    elif gid is not None:
+        options += ['--gid', str(gid)]
+    
+    if groups is not None and len(groups) > 0:
+        options += ['--groups', ",".join(groups)]
+
+    # create the new user, in his own group
+    if uid is not None:
+        options += ['--uid', str(uid)]
+    
+    if shell is not None:
+        options += ['--shell', shell]
 
     stdout, stderr = inginious_container_api.utils.execute_process(['useradd', *options], internal_command=True)
+    stdout, stderr = inginious_container_api.utils.execute_process(['cp', '-a', '/etc/skel/.', home_dir], internal_command=True)
 
     # if stderr != "":
     #     sys.stderr.buffer.write(b'An error occured while adding a new user:\n')
     #     sys.stderr.buffer.write(stderr)
     #     sys.exit(2)
-
-    if groups is not None:
-        # and add the new user to additional groups
-        inginious_container_api.utils.execute_process(['usermod', '-a', '-G', *groups, name], internal_command=True)
 
 
 def get_directory_content(path):
@@ -148,8 +137,8 @@ def add_wrapper(outfile, executable, mode, folder, command=None):
         
         next_user_uid = get_uid(step_configuration['next-user'])
 
-        os.chown(outfile, next_user_uid, 4242)
-        os.chmod(outfile, 0o4510)
+        os.chown(outfile, next_user_uid, next_user_uid)
+        os.chmod(outfile, 0o6551)
 
         os.chown(executable, next_user_uid, 4242)
         os.chmod(executable, 0o500)

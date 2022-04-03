@@ -1,6 +1,5 @@
 import os
 import pwd
-import shutil
 import yaml
 
 import inginious_container_api.utils
@@ -21,20 +20,20 @@ def get_config(field_name=None):
          problem: problem id
          Returns string, or bytes if a file is loaded
     """
-    configuration = _load_step_config()
+    step_configuration = _load_step_config()
     if field_name is None:
-        return configuration
+        return step_configuration
     
     field_split = field_name.split(":")
-    step_configuration = configuration[field_split[0]]
-    if isinstance(step_configuration, dict) and "filename" in step_configuration and "value" in step_configuration:
+    field_configuration = step_configuration.get(field_split[0], None)
+    if isinstance(step_configuration, dict) and "filename" in field_configuration and "value" in field_configuration:
         if len(field_split) > 1 and field_split[1] == 'filename':
-            return step_configuration["filename"]
+            return field_configuration["filename"]
         else:
-            with open(step_configuration["value"], 'rb') as fin:
+            with open(field_configuration["value"], 'rb') as fin:
                 return fin.read()
     else:
-        return step_configuration
+        return field_configuration
 
 
 def fix_output_directory_permissions(path):
@@ -63,11 +62,14 @@ class Step:
         self._user_infos = None
         self._setup_files = []
 
+        self._next_user = self._configuration.get("next-user", "nobody")
+        self._next_user_infos = pwd.getpwnam(self._next_user)
+
     def _create_associated_user(self):
         """
             Create the user associated with the challenge
         """
-        utils.create_user(self._name, groups=["worker"])
+        utils.create_user(self._name, create_self_group=True, home_dir=os.path.join("/task/student", self._name), shell="/bin/bash", groups=["worker"])
         self._user_infos = pwd.getpwnam(self._name)
 
     def _detect_script_command(self, script_name):
@@ -85,14 +87,8 @@ class Step:
         if self._user_infos is None:
             return
         
-        os.chmod(self._step_folder, 0o700)
-        os.chown(self._step_folder, self._user_infos.pw_uid, 4242)
-
-        for root, dirs, files in os.walk(self._step_folder):
-            for momo in dirs + files:
-                fullpath = os.path.join(root, momo)
-                if fullpath not in self._setup_files:
-                    os.chown(os.path.join(root, momo), self._user_infos.pw_uid, 4242)
+        os.chmod(self._step_folder, 0o750)
+        os.chown(self._step_folder, self._user_infos.pw_uid, self._next_user_infos.pw_uid)
 
     def _clean_files(self):
         utils.remove_files(
@@ -125,7 +121,7 @@ class Step:
         if setup_command is not None:
             inginious_container_api.utils.execute_process(setup_command, user=utils.get_username(), cwd=self._step_folder)
 
-        # self._set_default_permissions()
+        self._set_default_permissions()
 
         self._clean_files()
 
