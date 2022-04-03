@@ -7,8 +7,7 @@ difficulty=$(get-step-config "difficulty")
 parse-template challenge.j2 challenge.c
 gcc challenge.c -Wall -o challenge -fno-stack-protector
 
-chown -R "$next_user" .
-chgrp -R worker .
+chown -R "$next_user":worker .
 chmod 440 challenge.c
 
 add-wrapper challenge

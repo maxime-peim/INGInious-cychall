@@ -14,14 +14,14 @@ def get_config(field_name):
          problem: problem id
          Returns string, or bytes if a file is loaded
     """
-    configuration = _load_build_config()
+    build_configuration = _load_build_config()
     field_split = field_name.split(":")
-    build_configuration = configuration[field_split[0]]
-    if isinstance(build_configuration, dict) and "filename" in build_configuration and "value" in build_configuration:
+    field_configuration = build_configuration.get(field_split[0], None)
+    if isinstance(field_configuration, dict) and "filename" in field_configuration and "value" in field_configuration:
         if len(field_split) > 1 and field_split[1] == 'filename':
-            return build_configuration["filename"]
+            return field_configuration["filename"]
         else:
-            with open(build_configuration["value"], 'rb') as fin:
+            with open(field_configuration["value"], 'rb') as fin:
                 return fin.read()
     else:
-        return build_configuration
+        return field_configuration
