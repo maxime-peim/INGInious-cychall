@@ -1,6 +1,7 @@
 {% if command %}
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <sys/wait.h>
 #include <sys/types.h>
@@ -8,8 +9,81 @@
 #include <errno.h>
 #include <error.h>
 #include <signal.h>
+#include <pwd.h>
+#include <grp.h>
 
-int argsystem(const char *path, int argc, char *const argv[])
+#define DIRECTORY_SEPARATOR '/'
+#define ISSLASH(C) ((C) == DIRECTORY_SEPARATOR)
+#define FILE_SYSTEM_PREFIX_LEN(Filename) 0
+
+#define DEFAULT_SHELL "/bin/sh"
+#define DEFAULT_LOGIN_PATH ":/usr/ucb:/bin:/usr/bin"
+#define DEFAULT_ROOT_LOGIN_PATH "/usr/ucb:/bin:/usr/bin:/etc"
+
+/* Exit statuses for programs like 'env' that exec other programs.  */
+enum
+{
+  EXIT_TIMEDOUT = 124, /* Time expired before child completed.  */
+  EXIT_CANCELED = 125, /* Internal error prior to exec attempt.  */
+  EXIT_CANNOT_INVOKE = 126, /* Program located, but not usable.  */
+  EXIT_ENOENT = 127 /* Could not find program to exec.  */
+};
+
+char *
+last_component (char const *name)
+{
+  char const *base = name + FILE_SYSTEM_PREFIX_LEN (name);
+  char const *p;
+  bool last_was_slash = false;
+
+  while (ISSLASH (*base))
+    base++;
+
+  for (p = base; *p; p++)
+    {
+      if (ISSLASH (*p))
+        last_was_slash = true;
+      else if (last_was_slash)
+        {
+          base = p;
+          last_was_slash = false;
+        }
+    }
+
+  return (char *) base;
+}
+
+static void
+change_identity (const struct passwd *pw)
+{
+    if (setregid (pw->pw_gid, pw->pw_gid))
+        error (EXIT_CANCELED, errno, "cannot set group id");
+    if (setreuid (pw->pw_uid, pw->pw_uid))
+        error (EXIT_CANCELED, errno, "cannot set user id");
+}
+
+static void
+modify_environment (const struct passwd *pw, const char *shell)
+{
+    /* Leave TERM unchanged.  Set HOME, SHELL, USER, LOGNAME, PATH.
+        Unset all other environment variables.  */
+    char const *term = getenv ("TERM");
+    if (term)
+        term = strdup (term);
+    clearenv();
+    if (term)
+        setenv ("TERM", term, true);
+    setenv ("HOME", pw->pw_dir, true);
+    setenv ("SHELL", shell, true);
+    setenv ("USER", pw->pw_name, true);
+    setenv ("LOGNAME", pw->pw_name, true);
+    setenv ("PATH", (pw->pw_uid
+                    ? DEFAULT_LOGIN_PATH
+                    : DEFAULT_ROOT_LOGIN_PATH), true);
+}
+
+int
+argsystem(const char *path, int argc, char *const argv[])
 {
     sigset_t blockMask, origMask;
     struct sigaction saIgnore, saOrigQuit, saOrigInt, saDefault;
@@ -54,7 +128,7 @@ int argsystem(const char *path, int argc, char *const argv[])
 
         sigprocmask(SIG_SETMASK, &origMask, NULL);
 
-        char **__argv = (char **)malloc(sizeof(char *) * (4 + argc));
+        char **__argv = malloc(sizeof(char *) * (4 + argc));
         __argv[0] = "sh";
         __argv[1] = "-c";
         __argv[3 + argc] = NULL;
@@ -73,7 +147,7 @@ int argsystem(const char *path, int argc, char *const argv[])
             commandLen += exp10 + 2;
         }
 
-        __argv[2] = (char *)malloc(sizeof(char) * (commandLen + 1));
+        __argv[2] = malloc(sizeof(char) * (commandLen + 1));
         strcpy(__argv[2], path);
 
         pow10 = 10, exp10 = 1;
@@ -121,30 +195,92 @@ int argsystem(const char *path, int argc, char *const argv[])
     return status;
 }
 
-int main(int argc, char ** const argv) {
-    setreuid(geteuid(), geteuid());
-    setregid(getegid(), getegid());
+static void
+run_shell (char const *shell)
+{
+    char const **args = malloc(sizeof(char *) * 2);
+    char *arg0;
+    char *shell_basename;
 
-    int status = argsystem("{{ command }}", argc - 1, argc == 1 ? NULL : argv + 1);
+    shell_basename = last_component (shell);
+    arg0 = malloc (strlen (shell_basename) + 2);
+    arg0[0] = '-';
 
-    if (status != -1) {
+    strcpy (arg0 + 1, shell_basename);
+    args[0] = arg0;
+    args[1] = NULL;
+
+    execv (shell, (char **) args);
+
+    {
+        int exit_status = (errno == ENOENT ? EXIT_ENOENT : EXIT_CANNOT_INVOKE);
+        error (0, errno, "%s", shell);
+        exit (exit_status);
+    }
+}
+
+int
+main(int argc, char ** const argv) {
+    int status = -1;
+    int ret = 1;
+    char *shell = getenv ("SHELL");
+    uid_t next_uid = geteuid();
+    struct passwd pw_copy; 
+    struct passwd *pw = getpwuid(next_uid);
+
+    if (! (pw && pw->pw_name && pw->pw_name[0] && pw->pw_dir && pw->pw_dir[0]
+         && pw->pw_passwd))
+        error (EXIT_CANCELED, 0, "user with uid %d does not exist", next_uid);
+
+    /* Make a copy of the password information and point pw at the local
+        copy instead.  Otherwise, some systems (e.g. GNU/Linux) would clobber
+        the static data through the getlogin call from log_su.
+        Also, make sure pw->pw_shell is a nonempty string.
+        It may be NULL when NEW_USER is a username that is retrieved via NIS (YP),
+        but that doesn't have a default shell listed.  */
+    pw_copy = *pw;
+    pw = &pw_copy;
+    pw->pw_name = strdup (pw->pw_name);
+    pw->pw_passwd = strdup (pw->pw_passwd);
+    pw->pw_dir = strdup (pw->pw_dir);
+    pw->pw_shell = strdup (pw->pw_shell && pw->pw_shell[0]
+                            ? pw->pw_shell
+                            : DEFAULT_SHELL);
+
+    endpwent();
+
+    shell = strdup (shell ? shell : pw->pw_shell);
+    modify_environment (pw, shell);
+
+    change_identity(pw);
+
+    status = argsystem("{{ command }}", argc - 1, argc == 1 ? NULL : argv + 1);
+    ret = status != -1;
+
+    if (ret) {
         if (WIFEXITED(status)) {
-            int ret = WEXITSTATUS(status);
+            ret = WEXITSTATUS(status);
 
             if(!ret) {
                 printf("\nStep finished: switching to next user!\n");
-                execv("/bin/bash", (char *const []){"bash", "-i", NULL});
+
+                if (chdir (pw->pw_dir) != 0)
+                    error (0, errno, "warning: cannot change directory to %s", pw->pw_dir);
+
+                if (ferror (stderr))
+                    exit (EXIT_CANCELED);
+
+                run_shell(shell);
             }
             else{
-                printf("\nFailed to exploit the challenge.\n");
+                printf("\nFailed to exploit the challenge. Returned code: %d\n", ret);
             }
-            
-            return ret;
         }
         else{
-            printf("\nERROR: An error occurred while trying to switch to next user. Please contact the course administrator.\n");
+            printf("\nThe challenge ended unexpectedly (may be by a signal).\n");
         }
     }
-    return status != -1;
+
+    return ret;
 }
 {% endif %}
