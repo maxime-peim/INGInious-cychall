@@ -110,7 +110,7 @@ function check_template_id(event)
 function open_delete_modal(button) {
 	var name = button.closest('.template').id
     if($(button).hasClass("delete_template")){
-        $('#delete_template_modal .template_id').val(name.slice(7));
+        $('#delete_template_modal .templateid').val(name.slice(7));
     }
 }
 

@@ -1,14 +1,18 @@
 #!/bin/bash
-
 next_user=$(get-step-config "next-user")
 difficulty=$(get-step-config "difficulty")
+step_switch=$(get-step-config "step-switch")
 
 # Parse the template and compile the challenge
-parse-template challenge.j2 -o challenge.c
-gcc challenge.c -Wall -o challenge
+parse-template challenge.j2 challenge.c
+gcc challenge.c -o challenge
 
-chgrp -R worker .
-chown "$next_user" challenge
-chmod 000 challenge.c
-chmod 550 challenge
-chmod u+s challenge
+chown -R "$next_user":worker .
+chmod 440 challenge.c
+
+if [ $step_switch != "custom" ]
+then
+    add-wrapper challenge
+else
+    chmod 550 challenge
+fi

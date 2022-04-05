@@ -3,7 +3,7 @@ import os
 from inginious.common.filesystems.local import LocalFSProvider
 from inginious.common.base import id_checker, load_json_or_yaml
 from inginious.common import custom_yaml
-
+from . import constants
 
 class TemplateStructureException(Exception):
     """ Helper exception raised when a template does not have the right structure """
@@ -177,9 +177,15 @@ class TemplatesFolder:
                 file_folder.ensure_exists()
             
             file.save(os.path.join(file_folder.prefix, filename))
-
+        
+        self.add_default_setup_file(template_fs)
         template = Template(template_fs.prefix)
         self._templates[template.id] = template
+    
+    def add_default_setup_file(self, template_fs):
+        setup_path = os.path.join(template_fs.prefix, "setup")
+        if not os.path.exists(setup_path):
+            template_fs.put("setup", constants.DEFAULT_SETUP)
 
     def template_exists(self, templateid):
         return templateid in self._templates

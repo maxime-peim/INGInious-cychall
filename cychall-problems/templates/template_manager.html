@@ -82,7 +82,7 @@
   		{% for template in public_templates %}
 		      <div id="public_{{template.id}}" class="template handle list-group-item list-group-item-action d-flex">
 	            <div class="templateid">
-	                <h5>{{ template.name }}</h5>
+	                <h5>{{ template.name }} ({{template.id}})</h5>
 	            </div>
 	            {% include "template_buttons.html" %}
         	</div>
@@ -104,7 +104,7 @@
   		{% for template in course_templates %}
 		      <div id="course_{{template.id}}" class="template handle list-group-item list-group-item-action d-flex">
 	            <div class="templateid">
-	                <h5>{{ template.name }}</h5>
+	                <h5>{{ template.name }} ({{template.id}})</h5>
 	            </div>
 	            {% include "template_buttons.html" %}
         	</div>
