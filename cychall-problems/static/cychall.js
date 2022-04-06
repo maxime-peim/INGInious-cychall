@@ -8,23 +8,31 @@ function load_input_cychall(submissionid, key, input) {
 
 function studio_init_template_cychall(well, pid, problem)
 {
+    var exercise_selector = $('#exercise-selector-' + pid, well);
     if("exercise-path" in problem) {
-        var exercise_selector = $('#exercise-selector-' + pid, well);
         exercise_selector.val(problem["exercise-path"]).change();
-
-        studio_update_difficulty();
-        exercise_selector.change(studio_update_difficulty);
     }
 
-    if("difficulty" in problem)
+    studio_update_difficulty(exercise_selector);
+    exercise_selector.change(exercise_change_difficulty_handler);
+
+    if("difficulty" in problem){
         $('#difficulty-selector-' + pid, well).val(problem["difficulty"]).change();
+    }
 
     reload_options(pid);
 }
 
-function studio_update_difficulty() {
-    var exercise_id = $('select[id^=exercise-selector] :selected').attr('class');
-    var difficulty_selector = $('select[id^=difficulty-selector]');
+function exercise_change_difficulty_handler(event)
+{
+    var exercise_selector_id = event.target.id;
+    studio_update_difficulty($("#" + exercise_selector_id));
+}
+
+function studio_update_difficulty(exercise_selector) {
+    var pid = exercise_selector.attr('id').split('-')[2];
+    var exercise_id = exercise_selector.find(":selected").attr('class');
+    var difficulty_selector = $('#difficulty-selector-' + pid);
     $('option', difficulty_selector).hide();
     difficulty_selector.val([]);
     $('option.' + exercise_id, difficulty_selector).show();
@@ -130,8 +138,6 @@ function studio_update_exercise_options(data, method)
     $.ajax({
         success:    function(data)
                     {
-                        console.log(problem_id);
-                        console.log($("#exercise-options-" + problem_id));
                         $("#exercise-options-" + problem_id).html(data);
                     },
         method:     method == undefined ? "POST" : method,
