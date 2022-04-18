@@ -1,7 +1,9 @@
+from multiprocessing.sharedctypes import Value
 import os
 import sys
 import grp
 import pwd
+from tokenize import group
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -23,8 +25,10 @@ def extract_value(direct_value, value_path):
         sys.stderr.buffer.write(b'Cannot read value from file.')
         sys.exit(2)
 
+def copy_skel_files(home_dir):
+    return inginious_container_api.utils.execute_process(['cp', '-a', '/etc/skel/.', home_dir], internal_command=True)
 
-def create_user(name, uid=None, gid=None, home_dir=None, shell=None, groups=None, create_self_group=False):
+def create_user(name, uid=None, gid=None, home_dir=None, shell=None, groups=None, create_self_group=False, copy_skel=True):
     options = [name]
 
     home_dir = f'/task' if home_dir is None else home_dir
@@ -54,7 +58,8 @@ def create_user(name, uid=None, gid=None, home_dir=None, shell=None, groups=None
         options += ['--shell', shell]
 
     stdout, stderr = inginious_container_api.utils.execute_process(['useradd', *options], internal_command=True)
-    stdout, stderr = inginious_container_api.utils.execute_process(['cp', '-a', '/etc/skel/.', home_dir], internal_command=True)
+    if copy_skel:
+        stdout, stderr = copy_skel_files(home_dir)
 
     # if stderr != "":
     #     sys.stderr.buffer.write(b'An error occured while adding a new user:\n')
@@ -152,7 +157,14 @@ def add_wrapper(outfile, executable, mode, folder, command=None):
 
 def parse_template(outfile, infile):
     step_configuration = steps.get_config()
-    env = Environment(loader = FileSystemLoader(os.path.dirname(os.path.abspath(infile))), trim_blocks=True, lstrip_blocks=True, extensions=['jinja2_ansible_filters.AnsibleCoreFiltersExtension'])
+    env = Environment(
+        loader = FileSystemLoader(
+            os.path.dirname(os.path.abspath(infile))
+        ), 
+        trim_blocks=True, 
+        lstrip_blocks=True, 
+        extensions=['jinja2_ansible_filters.AnsibleCoreFiltersExtension']
+    )
     template = env.get_template(os.path.basename(infile))
 
     # Do the real job
@@ -186,3 +198,19 @@ def compile_gcc(c_file, outfile, command=None, remove_source=False):
     if remove_source:
         os.remove(c_file)
         
+def recursive_chown(path, username, group_name):
+    if not os.path.exists(path):
+        raise ValueError(f"{path} does not exists.")
+    
+    owner_uid = get_uid(username)
+    owner_gid = get_gid(group_name)
+
+    if os.path.isfile(path):
+        os.chown(path, owner_gid, owner_gid)
+    elif os.path.isdir(path):
+        for root, dirs, files in os.walk(path):
+            for momo in dirs + files:
+                fullpath = os.path.join(root, momo)
+                os.chown(fullpath, owner_uid, owner_gid)
+    else:
+        raise ValueError(f"{path} is not a folder nor a file.")

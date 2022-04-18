@@ -8,7 +8,7 @@ import sys
 import re
 import argparse
 import inginious_container_api.feedback
-import cychall_container_api.utils
+import cychall_container_api.utils as utils
 
 parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, description='Generate a flag and place it in a file.\n')
 parser.add_argument('--student-flag', help='Flag submitted by the student', default=None)
@@ -25,11 +25,11 @@ correct_flag_path = args.correct_flag_path
 problem = args.id
 
 
-correct_flag = cychall_container_api.utils.extract_value(
+correct_flag = utils.extract_value(
                     correct_flag,
                     correct_flag_path)
 
-student_flag = cychall_container_api.utils.extract_value(
+student_flag = utils.extract_value(
                     student_flag,
                     student_flag_path)
 

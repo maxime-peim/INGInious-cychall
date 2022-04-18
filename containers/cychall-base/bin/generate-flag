@@ -6,7 +6,7 @@
 
 import sys
 import argparse
-import cychall_container_api.flag
+import cychall_container_api.flag as flag
 
 parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, description='Generate a flag and place it in a file.\n')
 parser.add_argument('--prefix', help="Prefix for the flag: PREFIX{...}", default='INGInious')
@@ -20,13 +20,13 @@ student_read = args.student_read
 random_size = args.random_size
 output_path = args.output
 
-flag = cychall_container_api.flag.generate_flag(prefix=prefix, size=random_size)
+flag = flag.generate_flag(prefix=prefix, size=random_size)
 
 if output_path is None:
     sys.stdout.buffer.write(flag.encode("utf-8"))
 else:
     try:
-        cychall_container_api.flag.write_flag(flag, output_path, student_read=student_read)
+        flag.write_flag(flag, output_path, student_read=student_read)
     except OSError:
         sys.stderr.buffer.write(b'Error while writing the flag.')
         sys.exit(2)

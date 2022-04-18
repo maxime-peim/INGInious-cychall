@@ -69,7 +69,14 @@ class Step:
         """
             Create the user associated with the challenge
         """
-        utils.create_user(self._name, create_self_group=True, home_dir=os.path.join("/task/student", self._name), shell="/bin/bash", groups=["worker"])
+        utils.create_user(
+            self._name, 
+            create_self_group=True, 
+            home_dir=os.path.join("/task/student", self._name), 
+            shell="/bin/bash", 
+            groups=["worker"], 
+            copy_skel=False
+        )
         self._user_infos = pwd.getpwnam(self._name)
 
     def _detect_script_command(self, script_name):
@@ -83,9 +90,11 @@ class Step:
 
         return None
 
-    def _set_default_permissions(self):
+    def _set_step_folder_defaults(self):
         if self._user_infos is None:
             return
+
+        utils.copy_skel_files(self._step_folder)
         
         os.chmod(self._step_folder, 0o750)
         os.chown(self._step_folder, self._user_infos.pw_uid, self._next_user_infos.pw_uid)
@@ -114,14 +123,14 @@ class Step:
 
         setup_command = self._detect_script_command("setup")
         
-        self._allow_remove_passwd()
+        # self._allow_remove_passwd()
 
         self._write_step_config()
         
         if setup_command is not None:
             inginious_container_api.utils.execute_process(setup_command, user=utils.get_username(), cwd=self._step_folder)
 
-        self._set_default_permissions()
+        self._set_step_folder_defaults()
 
         self._clean_files()
 
@@ -135,11 +144,13 @@ class EndStep(Step):
         os.makedirs(self._step_folder, exist_ok=True)
         self._create_associated_user()
         
-        self._allow_remove_passwd()
+        # self._allow_remove_passwd()
         
         flag.write_flag(
             flag.generate_flag(),
             os.path.join(self._step_folder, "flag")
         )
 
-        self._set_default_permissions()
+        utils.recursive_chown(self._step_folder, self._name, "worker")
+        
+        self._set_step_folder_defaults()

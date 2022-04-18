@@ -7,17 +7,17 @@
 import os
 import sys
 import argparse
-import cychall_container_api.config
+import cychall_container_api.config as config
 import cychall_container_api.steps as steps
 from cychall_container_api.steps import Step, EndStep
 
 
-parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, description='Generate a flag and place it in a file.\n')
+parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, description='Generate all steps and user associated.\n')
 parser.add_argument('--output-dir', help="Where to generate the steps.", type=str, default="/task/student")
 args = parser.parse_args()
 
 # count the number of steps
-steps_configuration = cychall_container_api.config.get_config("steps")
+steps_configuration = config.get_config("steps")
 number_of_steps = len(steps_configuration)
 
 try:

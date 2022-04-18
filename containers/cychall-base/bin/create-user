@@ -8,7 +8,7 @@ import sys
 import re
 import argparse
 import inginious_container_api.feedback
-import cychall_container_api.utils
+import cychall_container_api.utils as utils
 
 parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, description='Create a new user without root privileges.\n')
 parser.add_argument('username', help='The user\'s name.')
@@ -22,4 +22,4 @@ uid = args.uid
 gid = args.gid
 home_dir = args.home_dir
 
-cychall_container_api.utils.create_user(username, uid=uid, gid=gid, home_dir=home_dir)
+utils.create_user(username, uid=uid, gid=gid, home_dir=home_dir)
