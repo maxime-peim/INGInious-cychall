@@ -4,17 +4,18 @@
 # This file is part of INGInious. See the LICENSE and the COPYRIGHTS files for
 # more information about the licensing of this file.
 
-import sys
-import re
 import argparse
-import inginious_container_api.feedback
+
 import cychall_container_api.utils as utils
 
-parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, description='Create a new user without root privileges.\n')
-parser.add_argument('username', help='The user\'s name.')
-parser.add_argument('-u', '--uid', help='The user\'s id.', type=int, default=None)
-parser.add_argument('-g', '--gid', help='The user\'s group id.', type=int, default=None)
-parser.add_argument('--home-dir', help='The user\'s home directory.', default=None)
+parser = argparse.ArgumentParser(
+    formatter_class=argparse.RawTextHelpFormatter,
+    description="Create a new user without root privileges.\n",
+)
+parser.add_argument("username", help="The user's name.")
+parser.add_argument("-u", "--uid", help="The user's id.", type=int, default=None)
+parser.add_argument("-g", "--gid", help="The user's group id.", type=int, default=None)
+parser.add_argument("--home-dir", help="The user's home directory.", default=None)
 args = parser.parse_args()
 
 username = args.username

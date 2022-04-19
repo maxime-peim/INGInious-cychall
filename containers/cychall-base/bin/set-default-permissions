@@ -5,15 +5,18 @@
 # more information about the licensing of this file.
 #
 # Tool to import answer from standard input to the template files given in arguments
-import sys
 import argparse
-import cychall_container_api.utils as utils
-import cychall_container_api.steps as steps
+import sys
 
-parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, 
-                                 description='Set the default permissions inside a step folder.',
-                                 epilog='Input data must have been passed through INGInious program.')
-parser.add_argument('folder', help="Step folder")
+import cychall_container_api.steps as steps
+import cychall_container_api.utils as utils
+
+parser = argparse.ArgumentParser(
+    formatter_class=argparse.RawTextHelpFormatter,
+    description="Set the default permissions inside a step folder.",
+    epilog="Input data must have been passed through INGInious program.",
+)
+parser.add_argument("folder", help="Step folder")
 args = parser.parse_args()
 
 folder = args.folder

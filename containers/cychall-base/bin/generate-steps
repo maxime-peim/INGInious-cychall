@@ -4,16 +4,23 @@
 # This file is part of INGInious. See the LICENSE and the COPYRIGHTS files for
 # more information about the licensing of this file.
 
-import os
-import sys
 import argparse
+import sys
+
 import cychall_container_api.config as config
 import cychall_container_api.steps as steps
-from cychall_container_api.steps import Step, EndStep
+from cychall_container_api.steps import EndStep, Step
 
-
-parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, description='Generate all steps and user associated.\n')
-parser.add_argument('--output-dir', help="Where to generate the steps.", type=str, default="/task/student")
+parser = argparse.ArgumentParser(
+    formatter_class=argparse.RawTextHelpFormatter,
+    description="Generate all steps and user associated.\n",
+)
+parser.add_argument(
+    "--output-dir",
+    help="Where to generate the steps.",
+    type=str,
+    default="/task/student",
+)
 args = parser.parse_args()
 
 # count the number of steps
@@ -33,9 +40,7 @@ try:
 
     # set the rights to the output directory to 770 so all step users can access their folder
     steps.fix_output_directory_permissions(args.output_dir)
-        
+
 except steps.StepGenerationError as sge:
     sys.stderr.buffer.write(str(sge).encode())
     sys.exit(2)
-
-    

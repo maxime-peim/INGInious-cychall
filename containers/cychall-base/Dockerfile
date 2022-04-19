@@ -4,9 +4,7 @@ ARG   VERSION=latest
 FROM  ingi/inginious-c-base:${VERSION}
 LABEL org.inginious.grading.name="cychall-base"
 
-RUN     dnf -y install passwd
-
-ADD     . /INGInious-cychall
+COPY     . /INGInious-cychall
 RUN     chmod -R 755 /INGInious-cychall/bin && \
         mv /INGInious-cychall/bin/* /bin
 
@@ -21,4 +19,5 @@ RUN     chmod -R 644 /INGInious-cychall/cychall_container_api && \
 
 RUN     rm -R /INGInious-cychall
 
-RUN     python3 -m pip install jinja2-ansible-filters
+RUN     dnf -y install passwd && dnf clean all && \
+        python3 -m pip install --no-cache-dir jinja2-ansible-filters==1.3.1

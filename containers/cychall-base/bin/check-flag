@@ -4,18 +4,31 @@
 # This file is part of INGInious. See the LICENSE and the COPYRIGHTS files for
 # more information about the licensing of this file.
 
-import sys
-import re
 import argparse
-import inginious_container_api.feedback
-import cychall_container_api.utils as utils
+import re
 
-parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, description='Generate a flag and place it in a file.\n')
-parser.add_argument('--student-flag', help='Flag submitted by the student', default=None)
-parser.add_argument('--student-flag-path', help='Path to the file in which the susdent stored his flag.', default=None)
-parser.add_argument('--correct-flag', help='Flag to be checked.', default=None)
-parser.add_argument('--correct-flag-path', help='Path to the file in which the flag is stored.', default=None)
-parser.add_argument('-i', '--id', help='Problem id.', default='')
+import cychall_container_api.utils as utils
+import inginious_container_api.feedback
+
+parser = argparse.ArgumentParser(
+    formatter_class=argparse.RawTextHelpFormatter,
+    description="Generate a flag and place it in a file.\n",
+)
+parser.add_argument(
+    "--student-flag", help="Flag submitted by the student", default=None
+)
+parser.add_argument(
+    "--student-flag-path",
+    help="Path to the file in which the susdent stored his flag.",
+    default=None,
+)
+parser.add_argument("--correct-flag", help="Flag to be checked.", default=None)
+parser.add_argument(
+    "--correct-flag-path",
+    help="Path to the file in which the flag is stored.",
+    default=None,
+)
+parser.add_argument("-i", "--id", help="Problem id.", default="")
 args = parser.parse_args()
 
 student_flag = args.student_flag
@@ -25,19 +38,15 @@ correct_flag_path = args.correct_flag_path
 problem = args.id
 
 
-correct_flag = utils.extract_value(
-                    correct_flag,
-                    correct_flag_path)
+correct_flag = utils.extract_value(correct_flag, correct_flag_path)
 
-student_flag = utils.extract_value(
-                    student_flag,
-                    student_flag_path)
+student_flag = utils.extract_value(student_flag, student_flag_path)
 
 # remove any trailing or heading whitespaces
-student_flag = re.sub(r'\s+', '', student_flag)
+student_flag = re.sub(r"\s+", "", student_flag)
 
 
-result = 'success' if student_flag == correct_flag else 'failed'
+result = "success" if student_flag == correct_flag else "failed"
 
 if not problem:
     inginious_container_api.feedback.set_global_result(result)

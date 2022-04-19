@@ -1,4 +1,5 @@
 #!/bin/bash
+
 next_user=$(get-step-config "next-user")
 difficulty=$(get-step-config "difficulty")
 step_switch=$(get-step-config "step-switch")
@@ -7,12 +8,11 @@ step_switch=$(get-step-config "step-switch")
 parse-template challenge.j2 challenge.c
 gcc challenge.c -o challenge
 
-chown -R "$next_user":worker .
+chown -R "${next_user}":worker .
 chmod 440 challenge.c
 
-if [ $step_switch != "custom" ]
-then
-    add-wrapper challenge
+if [[ ${step_switch} != "custom" ]]; then
+	add-wrapper challenge
 else
-    chmod 550 challenge
+	chmod 550 challenge
 fi

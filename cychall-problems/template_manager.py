@@ -1,33 +1,37 @@
 import os
 
-from inginious.common.filesystems.local import LocalFSProvider
-from inginious.common.base import id_checker, load_json_or_yaml
 from inginious.common import custom_yaml
+from inginious.common.base import id_checker, load_json_or_yaml
+from inginious.common.filesystems.local import LocalFSProvider
+
 from . import constants
 
+
 class TemplateStructureException(Exception):
-    """ Helper exception raised when a template does not have the right structure """
+    """Helper exception raised when a template does not have the right structure"""
+
     pass
 
+
 class TemplateIDExists(Exception):
-    """ Helper exception raised when a template id already exists. """
-    
+    """Helper exception raised when a template id already exists."""
+
     def __init__(self, templateid, path):
         self.message = f"{templateid} already in used in {path}."
         super().__init__(self.message)
 
 
 class Template:
-    """ 
-        Class associated with templates management.
-        It checks a template structure from a path to a template folder
-        and eases template files manipulation.
+    """
+    Class associated with templates management.
+    It checks a template structure from a path to a template folder
+    and eases template files manipulation.
     """
 
     def __init__(self, path):
         """
-            From a path to a folder containing template's files,
-            we check from the template's structure.
+        From a path to a folder containing template's files,
+        we check from the template's structure.
         """
         self._path = os.path.abspath(os.path.normpath(path))
         self._fs = LocalFSProvider(path)
@@ -39,27 +43,27 @@ class Template:
 
     @property
     def id(self):
-        """ Returns the template id, unique in the parent folder. """
+        """Returns the template id, unique in the parent folder."""
         return self._id
 
     @property
     def fs(self):
-        """ Returns the file system pointing to the template files. """
+        """Returns the file system pointing to the template files."""
         return self._fs
 
     @property
     def path(self):
-        """ Returns the path to the templates files. """
+        """Returns the path to the templates files."""
         return self._path
 
     @property
     def unique_id(self):
-        """ Returns a unique id over all templates. """
+        """Returns a unique id over all templates."""
         return hash(self._path)
 
     @property
     def name(self):
-        """ Returns the template name from the template configuration. """
+        """Returns the template name from the template configuration."""
         return self._name
 
     @property
@@ -69,28 +73,32 @@ class Template:
     @property
     def difficulties(self):
         return self._options.get("difficulties", ["Easy"])
-    
+
     @property
     def next_step_switch(self):
         return self._options.get("next-step-switch", "custom")
 
     def delete(self):
-        """ Delete the template's files """
+        """Delete the template's files"""
         self._fs.delete()
 
     def validation(self):
-        """ 
-            Check for template structure.
-            Raise a TemplateStructureException if not valid.
+        """
+        Check for template structure.
+        Raise a TemplateStructureException if not valid.
         """
 
         # if the path to the files does not exists, stop
         if not self._fs.exists():
-            raise TemplateStructureException(f"Path to template {self._path} does not exists.")
+            raise TemplateStructureException(
+                f"Path to template {self._path} does not exists."
+            )
 
         # the template id need to be valid
         if not id_checker(self._id):
-            raise TemplateStructureException(f"Template id {self._id} from {self._path} is not valid.")
+            raise TemplateStructureException(
+                f"Template id {self._id} from {self._path} is not valid."
+            )
 
         configuration_path = os.path.join(self._path, "configuration.yaml")
         try:
@@ -105,16 +113,17 @@ class Template:
 
         # if the name is not set, raise an exception
         if self._name is None:
-            raise TemplateStructureException(f"Template name not set in {configuration_path}.")
-    
+            raise TemplateStructureException(
+                f"Template name not set in {configuration_path}."
+            )
 
     @classmethod
     def validation_from_files(cls, templateid, files):
-        """ Check whether template's files have the valid structure on upload. """
+        """Check whether template's files have the valid structure on upload."""
 
         if not id_checker(templateid):
             raise TemplateStructureException(f"Template id {templateid} is not valid.")
-        
+
         configuration_correct = False
         for file in files:
             if os.path.basename(file.filename) == "configuration.yaml":
@@ -127,12 +136,15 @@ class Template:
                     break
 
         if not configuration_correct:
-            raise TemplateStructureException(f"Configuration file not found or template name not set.")
+            raise TemplateStructureException(
+                "Configuration file not found or template name not set."
+            )
+
 
 class TemplatesFolder:
     """
-        Class associated with folder containing several templates.
-        Eases template files manipulation and template access.
+    Class associated with folder containing several templates.
+    Eases template files manipulation and template access.
     """
 
     def __init__(self, path):
@@ -156,7 +168,7 @@ class TemplatesFolder:
         # Check if the template id is available in the folder
         if templateid in self._templates:
             raise TemplateIDExists(templateid, self._path)
-        
+
         # Check if the files have the right structure
         # let the exception be propagated
         Template.validation_from_files(templateid, files)
@@ -168,20 +180,20 @@ class TemplatesFolder:
         # TODO: there is surely a better way
         for file in files:
             file_folder = template_fs
-            file_path = "/".join(file.filename.strip("/").split('/')[1:])
+            file_path = "/".join(file.filename.strip("/").split("/")[1:])
             dir_struct = os.path.dirname(file_path)
             filename = os.path.basename(file_path)
-            
-            if dir_struct != '':
+
+            if dir_struct != "":
                 file_folder = file_folder.from_subfolder(dir_struct)
                 file_folder.ensure_exists()
-            
+
             file.save(os.path.join(file_folder.prefix, filename))
-        
+
         self.add_default_setup_file(template_fs)
         template = Template(template_fs.prefix)
         self._templates[template.id] = template
-    
+
     def add_default_setup_file(self, template_fs):
         setup_path = os.path.join(template_fs.prefix, "setup")
         if not os.path.exists(setup_path):
@@ -205,7 +217,7 @@ class TemplatesFolder:
 
 
 class TemplateManager:
-    """ Singleton used to manage all templates from all courses and common ones. """
+    """Singleton used to manage all templates from all courses and common ones."""
 
     __singleton = None
 
@@ -245,11 +257,13 @@ class TemplateManager:
             course_template_fs = course_fs.from_subfolder("templates")
 
             if not ensure_exists and not course_template_fs.exists():
-                raise FileNotFoundError(f"Template folder for course {courseid} not found.")
-            
+                raise FileNotFoundError(
+                    f"Template folder for course {courseid} not found."
+                )
+
             course_template_fs.ensure_exists()
             self.add_path_to_templates(course_template_fs.prefix, courseid)
-        
+
         return self._template_folders[courseid]
 
     def get_template(self, courseid, templateid):
@@ -274,28 +288,30 @@ class TemplateManager:
             course_specific = course_template_folder.get_all_templates()
         except FileNotFoundError:
             course_specific = []
-        
+
         return common, course_specific
 
     def add_template_from_files(self, courseid, templateid, files):
         # we must not add template with id already in course or common folder
         # else there can be problem on editing a template since we don't know
         # if the template is public or course specific.
-        course_template_folder = self.get_course_template_folder(courseid, ensure_exists=True)
+        course_template_folder = self.get_course_template_folder(
+            courseid, ensure_exists=True
+        )
         common_template_folder = self._template_folders["$common"]
 
         # Check if the template id is available in the folder
         if course_template_folder.template_exists(templateid):
             raise TemplateIDExists(templateid, course_template_folder.path)
-        
+
         if common_template_folder.template_exists(templateid):
             raise TemplateIDExists(templateid, common_template_folder.path)
 
         course_template_folder.add_template_from_files(templateid, files)
 
     def get_template_filelist(self, courseid, templateid):
-        """ Returns a flattened version of all the files inside the task directory, excluding the files task.* and hidden files.
-            It returns a list of tuples, of the type (Integer Level, Boolean IsDirectory, String Name, String CompleteName)
+        """Returns a flattened version of all the files inside the task directory, excluding the files task.* and hidden files.
+        It returns a list of tuples, of the type (Integer Level, Boolean IsDirectory, String Name, String CompleteName)
         """
         template = self.get_template(courseid, templateid)
         if template is None:
@@ -311,30 +327,40 @@ class TemplateManager:
             is_directory = False
             if data[-1] == "":
                 is_directory = True
-                data = data[0:len(data)-1]
+                data = data[0 : len(data) - 1]
             cur_pos = 0
             tree_pos = tmp_out
             while cur_pos != len(data):
                 if data[cur_pos] not in tree_pos:
-                    tree_pos[data[cur_pos]] = {} if is_directory or cur_pos != len(data) - 1 else None
+                    tree_pos[data[cur_pos]] = (
+                        {} if is_directory or cur_pos != len(data) - 1 else None
+                    )
                 tree_pos = tree_pos[data[cur_pos]]
                 cur_pos += 1
 
         def recur_print(current, level, current_name):
             iteritems = sorted(current.items())
             # First, the files
-            recur_print.flattened += [(level, False, f, current_name+"/"+f) for f, t in iteritems if t is None]
+            recur_print.flattened += [
+                (level, False, f, current_name + "/" + f)
+                for f, t in iteritems
+                if t is None
+            ]
             # Then, the dirs
             for name, sub in iteritems:
                 if sub is not None:
-                    recur_print.flattened.append((level, True, name, current_name+"/"+name+"/"))
+                    recur_print.flattened.append(
+                        (level, True, name, current_name + "/" + name + "/")
+                    )
                     recur_print(sub, level + 1, current_name + "/" + name)
+
         recur_print.flattened = []
-        recur_print(tmp_out, 0, '')
+        recur_print(tmp_out, 0, "")
         return recur_print.flattened
 
+
 class TemplateManagerHandler:
-    
+
     _template_manager = None
 
     def __init_subclass__(cls):

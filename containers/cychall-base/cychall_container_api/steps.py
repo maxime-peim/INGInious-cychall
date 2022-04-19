@@ -1,36 +1,40 @@
 import os
 import pwd
-import yaml
 
+import config
+import flag
 import inginious_container_api.utils
+import utils
+import yaml
 from inginious_container_api.run_types import run_types
 
-import utils
-import flag
-import config
+_step_configuration_filename = os.path.join(config._default_scripts_dir, ".__step.yaml")
 
-_step_configuration_filename = os.path.join(config._default_scripts_dir, '.__step.yaml')
 
 def _load_step_config():
-    with open(_step_configuration_filename, 'r') as step_in:
+    with open(_step_configuration_filename, "r") as step_in:
         return yaml.safe_load(step_in)
 
+
 def get_config(field_name=None):
-    """" Returns the specified problem answer in the form 
-         problem: problem id
-         Returns string, or bytes if a file is loaded
-    """
     step_configuration = _load_step_config()
     if field_name is None:
         return step_configuration
-    
+
     field_split = field_name.split(":")
-    field_configuration = step_configuration.get(field_split[0], None)
-    if isinstance(step_configuration, dict) and "filename" in field_configuration and "value" in field_configuration:
-        if len(field_split) > 1 and field_split[1] == 'filename':
+    if field_split[0] not in step_configuration:
+        raise ValueError(f"'{field_split[0]}' field not found.")
+
+    field_configuration = step_configuration[field_split[0]]
+    if (
+        isinstance(step_configuration, dict)
+        and "filename" in field_configuration
+        and "value" in field_configuration
+    ):
+        if len(field_split) > 1 and field_split[1] == "filename":
             return field_configuration["filename"]
         else:
-            with open(field_configuration["value"], 'rb') as fin:
+            with open(field_configuration["value"], "rb") as fin:
                 return fin.read()
     else:
         return field_configuration
@@ -49,11 +53,12 @@ def fix_output_directory_permissions(path):
         os.chown(last, 4242, 4242)
         os.chmod(last, 0o770)
 
+
 class StepGenerationError(Exception):
     pass
 
-class Step:
 
+class Step:
     def __init__(self, name, configuration, general_output_folder):
         # get the current user name and scripts source and destination
         self._name = name
@@ -62,20 +67,23 @@ class Step:
         self._user_infos = None
         self._setup_files = []
 
+        self._configuration["current-user"] = name
+
         self._next_user = self._configuration.get("next-user", "nobody")
         self._next_user_infos = pwd.getpwnam(self._next_user)
 
     def _create_associated_user(self):
         """
-            Create the user associated with the challenge
+        Create the user associated with the challenge
         """
+        home_dir = os.path.join("/task/student", self._name)
         utils.create_user(
-            self._name, 
-            create_self_group=True, 
-            home_dir=os.path.join("/task/student", self._name), 
-            shell="/bin/bash", 
-            groups=["worker"], 
-            copy_skel=False
+            self._name,
+            create_self_group=True,
+            home_dir=home_dir,
+            shell="/bin/bash",
+            groups=["worker"],
+            copy_skel=False,
         )
         self._user_infos = pwd.getpwnam(self._name)
 
@@ -95,23 +103,26 @@ class Step:
             return
 
         utils.copy_skel_files(self._step_folder)
-        
+
         os.chmod(self._step_folder, 0o750)
-        os.chown(self._step_folder, self._user_infos.pw_uid, self._next_user_infos.pw_uid)
+        os.chown(
+            self._step_folder, self._user_infos.pw_uid, self._next_user_infos.pw_uid
+        )
 
     def _clean_files(self):
         utils.remove_files(
-            os.path.join(self._step_folder, file)
-            for file in self._step_files
+            os.path.join(self._step_folder, file) for file in self._step_files
         )
 
     def _write_step_config(self):
-        with open(_step_configuration_filename, 'w') as step_out:
+        with open(_step_configuration_filename, "w") as step_out:
             yaml.safe_dump(self._configuration, step_out)
-    
+
     def _allow_remove_passwd(self):
         with open("/etc/sudoers", "a") as sudoers:
-            sudoers.write(f"{self._name} ALL=(root) NOPASSWD: /usr/bin/passwd -d {self._name}\n")
+            sudoers.write(
+                f"{self._name} ALL=(root) NOPASSWD: /usr/bin/passwd -d {self._name}\n"
+            )
 
     def build(self):
         # if there is a missing step, advertise
@@ -122,13 +133,15 @@ class Step:
         self._create_associated_user()
 
         setup_command = self._detect_script_command("setup")
-        
+
         # self._allow_remove_passwd()
 
         self._write_step_config()
-        
+
         if setup_command is not None:
-            inginious_container_api.utils.execute_process(setup_command, user=utils.get_username(), cwd=self._step_folder)
+            inginious_container_api.utils.execute_process(
+                setup_command, user=utils.get_username(), cwd=self._step_folder
+            )
 
         self._set_step_folder_defaults()
 
@@ -136,21 +149,17 @@ class Step:
 
 
 class EndStep(Step):
-
     def __init__(self, general_output_folder):
         super().__init__("end", None, general_output_folder)
 
     def build(self):
         os.makedirs(self._step_folder, exist_ok=True)
         self._create_associated_user()
-        
-        # self._allow_remove_passwd()
-        
-        flag.write_flag(
-            flag.generate_flag(),
-            os.path.join(self._step_folder, "flag")
-        )
 
-        utils.recursive_chown(self._step_folder, self._name, "worker")
-        
+        # self._allow_remove_passwd()
+
+        flag.write_flag(flag.generate_flag(), os.path.join(self._step_folder, "flag"))
+
+        utils.recursive_chown(self._step_folder, self._name, "worker", inside=True)
+
         self._set_step_folder_defaults()

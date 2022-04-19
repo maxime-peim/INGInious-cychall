@@ -103,13 +103,13 @@ def __wrapper_shell_python(
         os.chmod(outfile, 0o550)
 
     except FileExistsError as e:
-        sys.stderr.write("Error: " + str(e))
+        sys.stderr.write(f"Error: {e}")
         sys.exit(2)
     except IOError as e:
-        sys.stderr.write("Error: " + str(e))
+        sys.stderr.write(f"Error: {e}")
         sys.exit(2)
     except ValueError as e:
-        sys.stderr.write("Input is not compatible")
+        sys.stderr.write(f"Input is not compatible: {e}")
         sys.exit(2)
 
 

@@ -11,13 +11,12 @@ RUN   yum install -y sudo gdb gcc gcc-c++ cpp make cmake \
       openssl-devel time jansson-devel radare2 wget which \
       expat-devel gmp-devel mpfr-devel git dnf nano binutils \
       sqlite sqlite-devel strace && \
-      yum clean all && \
-      mkdir /tools
+      yum clean all
 
-RUN   python3 -m pip install --upgrade pwntools
+# RUN   python3 -m pip install --no-cache-dir --upgrade pwntools
 
 # ARG   GDB_VERSION=11.1
-# RUN   cd /tools && \
+# RUN   mkdir /tools && cd /tools && \
 #       wget "http://ftp.gnu.org/gnu/gdb/gdb-${GDB_VERSION}.tar.gz" && \
 #       tar -xvzf gdb-${GDB_VERSION}.tar.gz && rm gdb-${GDB_VERSION}.tar.gz && \
 #       cd gdb-${GDB_VERSION} && \

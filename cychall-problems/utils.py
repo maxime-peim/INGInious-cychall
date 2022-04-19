@@ -1,8 +1,10 @@
 import os
+
 from inginious.common.base import load_json_or_yaml
 
 PATH_TO_PLUGIN = os.path.abspath(os.path.dirname(__file__))
 PATH_TO_TEMPLATES = os.path.join(PATH_TO_PLUGIN, "templates")
+
 
 def load_build_config(task_fs):
     scripts_fs = task_fs.from_subfolder("student/scripts")

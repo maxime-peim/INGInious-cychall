@@ -7,13 +7,16 @@
 # Tool to import answer from standard input to the template files given in arguments
 
 import argparse
+
 import cychall_container_api.utils as utils
 
-parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, 
-                                 description='Parse the template file and generate an output file.',
-                                 epilog='Input data must have been passed through INGInious program.')
-parser.add_argument('input', help="Input filename")
-parser.add_argument('output', help="Output filename")
+parser = argparse.ArgumentParser(
+    formatter_class=argparse.RawTextHelpFormatter,
+    description="Parse the template file and generate an output file.",
+    epilog="Input data must have been passed through INGInious program.",
+)
+parser.add_argument("input", help="Input filename")
+parser.add_argument("output", help="Output filename")
 args = parser.parse_args()
 
 utils.parse_template(outfile=args.output, infile=args.input)
