@@ -1,0 +1,62 @@
+#!/bin/python3
+
+import os
+import pwd
+import subprocess
+import sys
+
+DEFAULT_SHELL = "/bin/sh"
+DEFAULT_LOGIN_PATH = "/usr/ucb:/bin:/usr/bin"
+DEFAULT_ROOT_LOGIN_PATH = "/usr/ucb:/bin:/usr/bin:/etc"
+COMMAND = "{{ command }}"
+
+
+def change_identity(user_pw):
+    os.setregid(user_pw.pw_gid, user_pw.pw_gid)
+    os.setreuid(user_pw.pw_uid, user_pw.pw_uid)
+
+
+def modify_environment(user_pw, shell):
+    term = os.environ["TERM"]
+
+    os.environ.clear()
+
+    if term:
+        os.environ["TERM"] = term
+    os.environ["HOME"] = user_pw.pw_dir
+    os.environ["SHELL"] = shell
+    os.environ["USER"] = user_pw.pw_name
+    os.environ["LOGNAME"] = user_pw.pw_name
+    os.environ["PATH"] = (
+        DEFAULT_LOGIN_PATH if user_pw.pw_uid else DEFAULT_ROOT_LOGIN_PATH
+    )
+
+
+def run_shell(shell):
+    shell_basename = os.path.basename(shell)
+    os.execv(shell, [f"-{shell_basename}"])
+
+
+if __name__ == "__main__":
+    command_argv = sys.argv[1:]
+    shell = os.environ["SHELL"]
+    next_user_uid = os.geteuid()
+    next_user_pw = pwd.getpwuid(next_user_uid)
+
+    modify_environment(next_user_pw, shell)
+
+    change_identity(next_user_pw)
+
+    process = subprocess.run([COMMAND, *command_argv])
+    ret = process.returncode
+
+    if ret < 0:
+        sys.stderr.write(f"Command terminated by signal {-ret}.")
+        sys.exit(ret)
+    elif ret == 0:
+        print("\nStep finished: switching to next user!\n", flush=True)
+        os.chdir(next_user_pw.pw_dir)
+        run_shell(shell)
+    else:
+        sys.stderr.write(f"\nFailed to exploit the challenge. Returned code: {ret}\n")
+        sys.exit(ret)

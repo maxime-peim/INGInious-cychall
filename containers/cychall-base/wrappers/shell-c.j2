@@ -17,7 +17,7 @@
 #define FILE_SYSTEM_PREFIX_LEN(Filename) 0
 
 #define DEFAULT_SHELL "/bin/sh"
-#define DEFAULT_LOGIN_PATH ":/usr/ucb:/bin:/usr/bin"
+#define DEFAULT_LOGIN_PATH "/usr/ucb:/bin:/usr/bin"
 #define DEFAULT_ROOT_LOGIN_PATH "/usr/ucb:/bin:/usr/bin:/etc"
 
 /* Exit statuses for programs like 'env' that exec other programs.  */
@@ -198,7 +198,6 @@ argsystem(const char *path, int argc, char *const argv[])
 static void
 run_shell (char const *shell)
 {
-    char const **args = malloc(sizeof(char *) * 2);
     char *arg0;
     char *shell_basename;
 
@@ -207,10 +206,8 @@ run_shell (char const *shell)
     arg0[0] = '-';
 
     strcpy (arg0 + 1, shell_basename);
-    args[0] = arg0;
-    args[1] = NULL;
 
-    execv (shell, (char **) args);
+    execv (shell, (char *const){arg0, NULL});
 
     {
         int exit_status = (errno == ENOENT ? EXIT_ENOENT : EXIT_CANNOT_INVOKE);
