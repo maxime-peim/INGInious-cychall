@@ -7,4 +7,4 @@ gcc challenge.c -Wall -o challenge -fno-stack-protector
 set-default-permissions .
 chmod 440 challenge.c
 
-add-wrapper challenge
+add-wrapper challenge shell-python

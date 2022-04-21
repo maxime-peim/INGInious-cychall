@@ -4,11 +4,10 @@ import os
 import stat
 import sys
 
-import cychall_container_api.steps as steps
-import cychall_container_api.utils as utils
+import steps
+import utils
+import config
 import inginious_container_api.utils
-
-WRAPPER_FILES_PATH = "/etc/cychall/wrappers"
 
 
 def __wrapper_sgid(challenge_file_path, **kwargs):
@@ -32,7 +31,7 @@ def __wrapper_shell_c(
     challenge_file_path, *, outfile="wrapped", command=None, **kwargs
 ):
     wrapper_file = "shell-c.j2"
-    wrapper_path = os.path.join(WRAPPER_FILES_PATH, wrapper_file)
+    wrapper_path = os.path.join(config.WRAPPER_DIR, wrapper_file)
     executable = os.path.basename(challenge_file_path)
     step_configuration = steps.get_config()
 
@@ -41,7 +40,7 @@ def __wrapper_shell_c(
 
     parsed = utils.parse(
         wrapper_path,
-        {"executable": executable, "command": command, "options": step_configuration},
+        render_parameters={"executable": executable, "command": command, "options": step_configuration},
     )
 
     try:
@@ -74,7 +73,7 @@ def __wrapper_shell_python(
     challenge_file_path, *, outfile="wrapped", command=None, **kwargs
 ):
     wrapper_file = "shell-python.j2"
-    wrapper_path = os.path.join(WRAPPER_FILES_PATH, wrapper_file)
+    wrapper_path = os.path.join(config.WRAPPER_DIR, wrapper_file)
     executable = os.path.basename(challenge_file_path)
     step_configuration = steps.get_config()
 
@@ -83,7 +82,7 @@ def __wrapper_shell_python(
 
     parsed = utils.parse(
         wrapper_path,
-        {"executable": executable, "command": command, "options": step_configuration},
+        render_parameters={"executable": executable, "command": command, "options": step_configuration},
     )
 
     try:
@@ -142,14 +141,10 @@ def __wrapper_ssh(challenge_file_path, **kwargs):
         [
             "/usr/bin/ssh-keygen",
             "-q",  # quiet
-            "-f",
-            id_file,
-            "-t",
-            "ecdsa",
-            "-b",
-            "521",
-            "-N",
-            "''",  # no passphrase
+            "-f", id_file,
+            "-t", "ecdsa",
+            "-b", "521",
+            "-N", "''",  # no passphrase
         ],
         internal_command=True,
         user=utils.get_username(),
@@ -165,7 +160,6 @@ def __wrapper_ssh(challenge_file_path, **kwargs):
     os.chmod(auth_keys_file, 0o644)
     os.chmod(f"{id_file}.pub", 0o644)
     os.chmod(id_file, 0o600)
-
 
 wrappers = {
     "sgid": __wrapper_sgid,

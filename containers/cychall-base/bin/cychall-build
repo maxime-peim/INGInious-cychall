@@ -1,0 +1,34 @@
+#!/bin/python3
+# -*- coding: utf-8 -*-
+#
+# This file is part of INGInious. See the LICENSE and the COPYRIGHTS files for
+# more information about the licensing of this file.
+
+import sys
+
+from cychall_container_api import config
+from cychall_container_api import steps
+from cychall_container_api.steps import EndStep, Step
+
+if __name__ == "__main__":
+    # count the number of steps
+    steps_configuration = config.get_config("steps")
+    number_of_steps = len(steps_configuration)
+
+    try:
+        # steps and users associated need to be generated from last to first
+        # so user for step_i+1 exists to give permission on building step_i
+        EndStep(config.STUDENT_DIR).build()
+
+        # generate each step
+        for stepi in range(number_of_steps, 0, -1):
+            step_name = f"step{stepi}"
+            step_configuration = steps_configuration.get(step_name, {})
+            Step(step_name, step_configuration, config.STUDENT_DIR).build()
+
+        # set the rights to the output directory to 770 so all step users can access their folder
+        steps.fix_output_directory_permissions(config.STUDENT_DIR)
+
+    except steps.StepGenerationError as sge:
+        sys.stderr.write(str(sge))
+        sys.exit(2)

@@ -1,14 +1,25 @@
 import os
-
 import yaml
 
-_default_scripts_dir = "/task/student/scripts/"
-_build_configuration_filename = os.path.join(_default_scripts_dir, "build.yaml")
+
+CYCHALL_DIR = "/.__cychall"
+WRAPPER_DIR = os.path.join(CYCHALL_DIR, "wrappers")
+STUDENT_DIR = "/task/student"
+SCRIPT_DIR = os.path.join(STUDENT_DIR, "scripts")
+
+BUILD_FILENAME = ".__build.yaml"
+STEP_FILENAME = ".__step.yaml"
+FLAGS_FILENAME = ".__flags.yaml"
+
+BUILD_FILE_PATH = os.path.join(SCRIPT_DIR, BUILD_FILENAME)
+STEP_FILE_PATH = os.path.join(SCRIPT_DIR, STEP_FILENAME)
+GENERATED_FLAGS_FILE_PATH = os.path.join(SCRIPT_DIR, FLAGS_FILENAME)
+STUDENT_FLAGS_FILE_PATH = os.path.join(STUDENT_DIR, FLAGS_FILENAME)
 
 
 def _load_build_config():
     """Open existing config file"""
-    with open(_build_configuration_filename, "r") as build_in:
+    with open(BUILD_FILE_PATH, "r") as build_in:
         return yaml.safe_load(build_in)
 
 

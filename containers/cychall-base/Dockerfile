@@ -8,9 +8,9 @@ COPY     . /INGInious-cychall
 RUN     chmod -R 755 /INGInious-cychall/bin && \
         mv /INGInious-cychall/bin/* /bin
 
-RUN     chmod -R 755 /INGInious-cychall/wrappers && \
-        mkdir /etc/cychall && \
-        mv /INGInious-cychall/wrappers /etc/cychall
+RUN     chmod -R 644 /INGInious-cychall/static && \
+        mkdir /.__cychall && chmod 600 /.__cychall && \
+        mv /INGInious-cychall/static/* /.__cychall
 
 RUN     chmod -R 644 /INGInious-cychall/cychall_container_api && \
         mkdir -p /usr/lib/python3.8/site-packages/cychall_container_api && \

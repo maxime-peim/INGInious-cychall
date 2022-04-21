@@ -75,8 +75,8 @@ class Template:
         return self._options.get("difficulties", ["Easy"])
 
     @property
-    def next_step_switch(self):
-        return self._options.get("next-step-switch", "custom")
+    def step_switch(self):
+        return self._options.get("step-switch", "custom")
 
     def delete(self):
         """Delete the template's files"""

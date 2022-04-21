@@ -88,7 +88,7 @@ class ExerciseConfigurationOptions(INGIniousAdminPage, TemplateManagerHandler):
             ).elements
             exercise_switch = self._template_manager.get_template(
                 courseid, templateid
-            ).next_step_switch
+            ).step_switch
             return self.show_exercise_options_tab(
                 courseid,
                 taskid,

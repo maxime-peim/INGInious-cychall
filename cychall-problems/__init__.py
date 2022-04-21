@@ -85,11 +85,11 @@ def generate_task_steps(course, taskid, task_data, task_fs):
             if step_fs.exists():
                 step_fs.delete()
 
-    yaml_content = get_json_or_yaml("build.yaml", task_configuration)
+    yaml_content = get_json_or_yaml(".__build.yaml", task_configuration)
 
-    scripts_fs.put("build.yaml", yaml_content)
+    scripts_fs.put(".__build.yaml", yaml_content)
 
-    task_fs.put("run", constants.DEFAULT_RUN)
+    task_fs.put("run.py", constants.DEFAULT_RUN_PY)
 
 
 def init(plugin_manager, course_factory, client, plugin_config):

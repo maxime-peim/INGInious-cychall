@@ -8,15 +8,16 @@
 
 import argparse
 
-import cychall_container_api.utils as utils
+from cychall_container_api import utils
 
-parser = argparse.ArgumentParser(
-    formatter_class=argparse.RawTextHelpFormatter,
-    description="Parse the template file and generate an output file.",
-    epilog="Input data must have been passed through INGInious program.",
-)
-parser.add_argument("input", help="Input filename")
-parser.add_argument("output", help="Output filename")
-args = parser.parse_args()
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawTextHelpFormatter,
+        description="Parse the template file and generate an output file.",
+        epilog="Input data must have been passed through INGInious program.",
+    )
+    parser.add_argument("input", help="Input filename")
+    parser.add_argument("output", help="Output filename")
+    args = parser.parse_args()
 
-utils.parse_template(outfile=args.output, infile=args.input)
+    utils.parse_template(outfile=args.output, infile=args.input)

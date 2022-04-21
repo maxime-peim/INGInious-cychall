@@ -8,22 +8,23 @@
 import argparse
 import sys
 
-import cychall_container_api.steps as steps
-import cychall_container_api.utils as utils
+from cychall_container_api import steps
+from cychall_container_api import utils
 
-parser = argparse.ArgumentParser(
-    formatter_class=argparse.RawTextHelpFormatter,
-    description="Set the default permissions inside a step folder.",
-    epilog="Input data must have been passed through INGInious program.",
-)
-parser.add_argument("folder", help="Step folder")
-args = parser.parse_args()
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawTextHelpFormatter,
+        description="Set the default permissions inside a step folder.",
+        epilog="Input data must have been passed through INGInious program.",
+    )
+    parser.add_argument("folder", help="Step folder")
+    args = parser.parse_args()
 
-folder = args.folder
-next_user = steps.get_config("next-user")
+    folder = args.folder
+    next_user = steps.get_config("next-user")
 
-try:
-    utils.recursive_chown(folder, next_user, "worker")
-except ValueError as e:
-    sys.stderr.write(e)
-    sys.exit(2)
+    try:
+        utils.recursive_chown(folder, next_user, "worker")
+    except ValueError as e:
+        sys.stderr.write(e)
+        sys.exit(2)
