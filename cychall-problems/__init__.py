@@ -70,7 +70,7 @@ def generate_task_steps(course, taskid, task_data, task_fs):
             "step-switch": subproblem["step-switch"],
             "problemid": subproblem_id,
             "template": template_name,
-            "difficulty": subproblem["difficulty"],
+            "difficulty": subproblem.get("difficulty", "Easy"),
             "next-user": f"step{stepi+1}" if stepi < len(subproblems) else "end",
         }
 

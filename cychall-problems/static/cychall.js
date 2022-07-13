@@ -32,8 +32,12 @@ function studio_update_difficulty(exercise_selector) {
   var exercise_id = exercise_selector.find(":selected").attr("class");
   var difficulty_selector = $("#difficulty-selector-" + pid);
   $("option", difficulty_selector).hide();
-  difficulty_selector.val([]);
   $("option." + exercise_id, difficulty_selector).show();
+  difficulty_selector
+    .val(
+      $("option." + exercise_id, difficulty_selector)[0].value
+    )
+    .change();
 }
 
 function load_feedback_cychall(key, content) {
