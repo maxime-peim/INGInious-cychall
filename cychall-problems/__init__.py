@@ -7,6 +7,7 @@ import json
 import os
 
 from inginious.common.base import get_json_or_yaml
+from inginious.common.filesystems.local import LocalFSProvider
 
 from . import constants, pages, utils
 from .template_manager import TemplateManager
@@ -99,10 +100,14 @@ def generate_task_steps(course, taskid, task_data, task_fs):
 
 def init(plugin_manager, course_factory, client, plugin_config):
 
+    default_templates_fs = LocalFSProvider(
+        os.path.split(course_factory.get_fs().prefix[:-1])[0]
+    ).from_subfolder("templates")
+    
     if "templates_folder" not in plugin_config:
-        raise PluginMissingParameter("templates_folder")
-
-    paths_to_exercise_templates = plugin_config.get("templates_folder", "")
+        default_templates_fs.ensure_exists()
+    
+    paths_to_exercise_templates = plugin_config.get("templates_folder", default_templates_fs.prefix)
     TemplateManager.init_singleton(
         course_factory, common_path=paths_to_exercise_templates
     )

@@ -1,6 +1,7 @@
 from flask import request
 
 from inginious.frontend.pages.course_admin.utils import INGIniousAdminPage
+from inginious.common.base import id_checker
 
 from ...template_manager import TemplateManagerHandler, TemplateIDExists, TemplateStructureException
 from ... import constants
@@ -27,17 +28,30 @@ class TemplatesList(INGIniousAdminPage, TemplateManagerHandler):
         error = None
         if "upload" in request.form:
             files = request.files.getlist("file")
-            if files:
-                is_public = request.form.get("public", False)
-                templateid = request.form.get("templateid", None)
 
-                try:
-                    effective_courseid = "$common" if is_public else courseid
-                    self._template_manager.add_template_from_files(effective_courseid, templateid, files)
-                except (TemplateStructureException, TemplateIDExists) as e:
-                    error = str(e)
-            else:
-                error = "No template selected."
+            if files is None:
+                return self.show_page(course, "No template selected.")
+            
+            is_public = request.form.get("public", False)
+            templateid = request.form.get("templateid", None)
+
+            if templateid is None:
+                return self.show_page(course, "An id must be given.")
+
+            elif not id_checker(templateid):
+                return self.show_page(course, "Invalid template id.")
+
+            elif templateid.endswith("_common") and not is_public:
+                return self.show_page(course, "Course-specific template id cannot ends with '_common'")
+
+            templateid += "_common" if is_public else ""
+            
+            try:
+                effective_courseid = "$common" if is_public else courseid
+                self._template_manager.add_template_from_files(effective_courseid, templateid, files)
+            except (TemplateStructureException, TemplateIDExists) as e:
+                error = str(e)
+                
         
         elif "delete" in request.form:
             templateid = request.form.get("templateid", None)
