@@ -14,6 +14,11 @@ from .template_manager import TemplateManager
 __version__ = "0.1.dev0"
 
 
+class PluginMissingParameter(Exception):
+    def __init__(self, parameter):
+        super().__init__(f"'{parameter}' variable must be set in order to use this plugin.")
+
+
 def generate_task_steps(course, taskid, task_data, task_fs):
     subproblems = task_data["problems"]
 
@@ -93,6 +98,9 @@ def generate_task_steps(course, taskid, task_data, task_fs):
 
 
 def init(plugin_manager, course_factory, client, plugin_config):
+
+    if "templates_folder" not in plugin_config:
+        raise PluginMissingParameter("templates_folder")
 
     paths_to_exercise_templates = plugin_config.get("templates_folder", "")
     TemplateManager.init_singleton(
