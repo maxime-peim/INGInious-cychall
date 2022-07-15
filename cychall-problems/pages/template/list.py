@@ -55,8 +55,12 @@ class TemplatesList(INGIniousAdminPage, TemplateManagerHandler):
         
         elif "delete" in request.form:
             templateid = request.form.get("templateid", None)
+            if templateid is None:
+                return self.show_page(course, "Invalid template id.")
+            
+            effective_courseid = "$common" if templateid[-7:] == "_common" else courseid
             try:
-                template_folder = self._template_manager.get_course_template_folder(courseid)
+                template_folder = self._template_manager.get_course_template_folder(effective_courseid)
                 template_folder.delete_template(templateid)
             except Exception as e:
                 error = str(e)
