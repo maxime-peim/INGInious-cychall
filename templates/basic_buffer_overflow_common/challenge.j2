@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -11,7 +12,13 @@ int main()
     printf("\n Enter the password : \n");
     gets(buffer);
 
-    if(strcmp(buffer, "{{ range(1000) | random | hash('md5') }}")) {
+    {% if options["use_random"] %}
+        {% set password = range(1000) | random | hash('md5') %}
+    {% else %}
+        {% set password = "St4t1c P455w0rD" %}
+    {% endif %}
+    
+    if(strcmp(buffer, "{{ password }}")) {
         printf ("\n Wrong Password \n");
     }
     else {
@@ -19,5 +26,14 @@ int main()
         pass = 1;
     }
 
-    exit(!pass);
+    int not_change_user = 1;
+
+    {% if options["difficulty"] != "Hard" %}
+    if(pass)
+    {% else %}
+    if(pass == {{ options["specific_value"] }})
+    {% endif %}
+        not_change_user = 0;
+
+    exit(not_change_user);
 }

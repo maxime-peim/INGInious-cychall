@@ -5,37 +5,16 @@ options:
         - Medium
         - Hard
     elements:
-        - id: test
-          label: Test checkbox
+        - id: use_random
+          label: Random password
           type: checkbox
           checked: false
-          modes:
-            - Easy
-            - Medium
-        
-        - id: debug
-          label: Debug information
-          type: text
-          placeholder: sdfsdfs
+        - id: specific_value
+          label: Specific value to overflow
+          type: select
+          values:
+            - 0xdeadbeef
+            - 0xdeadc0de
+            - 0xc001
           modes:
             - Hard
-            - Elite
-        
-        - id: select_test
-          label: test selector
-          type: select
-          default: Item 2
-          values:
-            - Item 1
-            - Item 2
-            - Item 3
-        
-        - id: radio_test
-          label: Radio buttons
-          type: radio
-          default: ee
-          buttons:
-            - id: ee
-              label: eee
-            - id: rr
-              label: eee
