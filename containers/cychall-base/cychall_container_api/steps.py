@@ -104,7 +104,7 @@ class Step:
 
         utils.copy_skel_files(self._step_folder)
 
-        os.chmod(self._step_folder, 0o750)
+        os.chmod(self._step_folder, 0o550)
         os.chown(
             self._step_folder, self._user_infos.pw_uid, self._next_user_infos.pw_uid
         )

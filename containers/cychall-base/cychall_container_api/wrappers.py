@@ -101,6 +101,9 @@ def __wrapper_shell_python(
         os.chown(outfile, next_user_uid, 4242)
         os.chmod(outfile, 0o550)
 
+        os.chown(challenge_file_path, next_user_uid, 4242)
+        os.chmod(challenge_file_path, 0o550)
+
     except FileExistsError as e:
         sys.stderr.write(f"Error: {e}")
         sys.exit(2)
