@@ -21,6 +21,6 @@ if __name__ == "__main__":
         feedback.set_global_feedback(
             f"""{'Congratulations' if all_correct else 'Keep going'}!
 
-            You found {n_correct} our of {n_flags} flags.
+            You found {n_correct} out of {n_flags} flags.
             """
         )
