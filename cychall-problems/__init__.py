@@ -19,6 +19,10 @@ class PluginMissingParameter(Exception):
     def __init__(self, parameter):
         super().__init__(f"'{parameter}' variable must be set in order to use this plugin.")
 
+def find_matching_subproblem(build_config, problemid):
+    for step in build_config["steps"]:
+        if build_config["steps"][step]["problemid"] == problemid:
+            return step
 
 def generate_task_steps(course, taskid, task_data, task_fs):
     subproblems = task_data["problems"]
@@ -46,6 +50,13 @@ def generate_task_steps(course, taskid, task_data, task_fs):
     scripts_fs = student_fs.from_subfolder("scripts")
     scripts_fs.ensure_exists()
 
+    if original_build_config is not None:
+        old_fs = task_fs.from_subfolder("old")
+        if old_fs.exists():
+            old_fs.delete()
+        os.rename(task_fs.prefix + "student", task_fs.prefix + "old") # Move files to task/old
+        student_fs.ensure_exists()
+
     task_configuration = {"steps": {}}
     for stepi, subproblem_id in enumerate(subproblems.keys(), start=1):
         subproblem = subproblems[subproblem_id]
@@ -54,22 +65,18 @@ def generate_task_steps(course, taskid, task_data, task_fs):
         step_fs = student_fs.from_subfolder(step_name)
 
         replace = True
-        # Do not replace files if problemid and templateid are the same as existing build config
-        if original_build_config is not None:
-            if (
-                step_name in original_build_config["steps"]
-                and original_build_config["steps"][step_name].get("problemid", None)
-                == subproblem_id
-                and original_build_config["steps"][step_name].get("template", None)
-                == template_name
-            ):
+        if original_build_config is not None: # Do not replace files if problemid and templateid are the same as existing build config
+            previous_step = find_matching_subproblem(original_build_config, subproblem_id)
+            if previous_step is not None and original_build_config["steps"][previous_step].get("template", None) == template_name:
+                step_fs.ensure_exists()
+                step_fs.copy_to(old_fs.prefix + previous_step) # Copy files from previous state
                 replace = False
 
         if replace:
             if step_fs.exists():
                 step_fs.delete()
             step_fs.ensure_exists()
-            step_fs.copy_to(subproblem["exercise-path"])
+            step_fs.copy_to(subproblem["exercise-path"]) # Copy files from template
 
         task_configuration["steps"][step_name] = {
             **(subproblem.get("options", {})),
@@ -80,22 +87,16 @@ def generate_task_steps(course, taskid, task_data, task_fs):
             "next-user": f"step{stepi+1}" if stepi < len(subproblems) else "end",
         }
 
-    if original_build_config is not None:
-        to_delete = [
-            k
-            for k in original_build_config["steps"].keys()
-            if k not in task_configuration["steps"]
-        ]
-        for step_name in to_delete:
-            step_fs = student_fs.from_subfolder(step_name)
-            if step_fs.exists():
-                step_fs.delete()
-
     yaml_content = get_json_or_yaml(".__build.yaml", task_configuration)
 
     scripts_fs.put(".__build.yaml", yaml_content)
 
-    task_fs.put("run.py", constants.DEFAULT_RUN_PY)
+    if not task_fs.exists("run.py"): # Add default run file
+        task_fs.put("run.py", constants.DEFAULT_RUN_PY)
+    
+    if original_build_config is not None: # Delete previous state
+        if old_fs.exists():
+            old_fs.delete()
 
 
 def init(plugin_manager, course_factory, client, plugin_config):
