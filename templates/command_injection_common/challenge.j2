@@ -39,7 +39,7 @@ int main(int argc, char **argv)
     	setreuid(geteuid(), geteuid());
     	setregid(getegid(), getegid());
 		strcat(cmd, ip);
-		execve(cmd);
+		system(cmd);
 	}
     else {
     	return 1;
@@ -48,7 +48,7 @@ int main(int argc, char **argv)
     setreuid(geteuid(), geteuid());
     setregid(getegid(), getegid());
 	strcat(cmd, ip);
-	execve(cmd);
+	system(cmd);
 	{% endif %}
     return 0;
 }
