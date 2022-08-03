@@ -24,7 +24,7 @@ if __name__ == "__main__":
     next_user = steps.get_config("next-user")
 
     try:
-        utils.recursive_chown(folder, next_user, "worker")
+        utils.recursive_chown(folder, next_user, next_user)#, "worker")
     except ValueError as e:
         sys.stderr.write(e)
         sys.exit(2)

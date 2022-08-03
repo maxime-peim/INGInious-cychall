@@ -23,7 +23,7 @@ def __wrapper_suid(challenge_file_path, **kwargs):
 def __wrapper_sguid(challenge_file_path, **kwargs):
     challenge_permissions = os.stat(challenge_file_path)
     os.chmod(
-        challenge_file_path, challenge_permissions.st_mode | stat.S_ISUID | stat.S_ISUID
+        challenge_file_path, challenge_permissions.st_mode | stat.S_ISUID | stat.S_ISGID
     )
 
 
@@ -49,14 +49,15 @@ def __wrapper_shell_c(
 
         next_user = step_configuration["next-user"]
         next_user_uid = utils.get_uid(next_user)
+        next_user_gid = utils.get_gid(next_user)
 
         utils.compile_gcc("__shell.c", outfile, remove_source=True)
 
-        os.chown(outfile, next_user_uid, next_user_uid)
-        os.chmod(outfile, 0o6551)
+        os.chown(outfile, next_user_uid, next_user_gid)
+        os.chmod(outfile, 0o5551)
 
-        os.chown(executable, next_user_uid, 4242)
-        os.chmod(executable, 0o500)
+        os.chown(executable, next_user_uid, next_user_gid)
+        os.chmod(executable, 0o555)
 
     except FileExistsError as e:
         sys.stderr.write("Error: " + str(e))
@@ -92,17 +93,18 @@ def __wrapper_shell_python(
         current_user = step_configuration["current-user"]
         next_user = step_configuration["next-user"]
         next_user_uid = utils.get_uid(next_user)
+        next_user_gid = utils.get_gid(next_user)
 
         with open("/etc/sudoers", "a") as sudoers:
             sudoers.write(
                 f"{current_user} ALL=({next_user}) NOPASSWD: {os.path.abspath(outfile)}\n"
             )
 
-        os.chown(outfile, next_user_uid, 4242)
-        os.chmod(outfile, 0o550)
+        os.chown(outfile, next_user_uid, next_user_gid)
+        os.chmod(outfile, 0o555)
 
-        os.chown(challenge_file_path, next_user_uid, 4242)
-        os.chmod(challenge_file_path, 0o550)
+        os.chown(challenge_file_path, next_user_uid, next_user_gid)
+        os.chmod(challenge_file_path, 0o555)
 
     except FileExistsError as e:
         sys.stderr.write(f"Error: {e}")

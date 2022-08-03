@@ -8,13 +8,14 @@ open_source=$(get-step-config "open_source")
 parse-template challenge.j2 challenge.c
 gcc -Wall challenge.c -o challenge
 
-set-default-permissions .
+set-default-ownership .
 
-add-wrapper challenge suid
-chmod o-rwx challenge
+chmod 555 challenge
 
 if [ "${open_source}" == "on" ]; then
     chmod 440 challenge.c
 else
     chmod 000 challenge.c
 fi
+
+add-wrapper challenge sguid
