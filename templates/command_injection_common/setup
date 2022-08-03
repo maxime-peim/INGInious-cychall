@@ -1,12 +1,20 @@
 #!/bin/bash
 
 next_user=$(get-step-config "next-user")
+difficulty=$(get-step-config "difficulty")
+open_source=$(get-step-config "open_source")
 
 # Parse the template and compile the challenge
 parse-template challenge.j2 challenge.c
 gcc -Wall challenge.c -o challenge
 
-chown -R "${next_user}" .
-chgrp -R worker .
-chmod 000 challenge.c
-chmod u+s challenge
+set-default-permissions .
+
+add-wrapper challenge suid
+chmod o-rwx challenge
+
+if [ "${open_source}" == "on" ]; then
+    chmod 440 challenge.c
+else
+    chmod 000 challenge.c
+fi
