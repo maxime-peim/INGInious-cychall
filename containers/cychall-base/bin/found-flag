@@ -17,13 +17,14 @@ if __name__ == "__main__":
         description="Did you found a flag?.\n",
     )
     parser.add_argument("flag", help="The current flag.", type=str)
+    parser.add_argument("--name", help="The name of the flag. If not given, the current username is used.", type=str)
     args = parser.parse_args()
 
     student_flag = args.flag
-    step = utils.get_username()
+    name = args.name if args.name is not None else utils.get_username()
 
     try:
-        flag.update_student_flag(step, student_flag)
+        flag.update_student_flag(name, student_flag)
     except ValueError:
         sys.stderr.write("There is no flag to find in this step.")
         sys.exit(2)

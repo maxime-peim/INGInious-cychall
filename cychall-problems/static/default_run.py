@@ -9,7 +9,7 @@ if __name__ == "__main__":
     # aucune idée de la raison, alors que None est la valeur
     # par défaut...
     ssh_student.ssh_student(setup_script="cychall-build", script_as_root=True, user="step1", container=None, environment_type=None)
-    all_correct, n_correct, correct_flags = flag.check_all_flag()
+    all_correct, n_correct, correct_flags = flag.check_all_flags()
     n_flags = len(correct_flags)
 
     if n_flags == 0:

@@ -1,0 +1,26 @@
+#!/bin/python3
+# -*- coding: utf-8 -*-
+#
+# This file is part of INGInious. See the LICENSE and the COPYRIGHTS files for
+# more information about the licensing of this file.
+
+import argparse
+import sys
+
+from cychall_container_api import flag
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawTextHelpFormatter,
+        description="Check the student flags against generated ones.\n",
+    )
+    parser.add_argument("--names", type=str, nargs="*", help="The name of the flag. If not given all flags are checked.")
+    args = parser.parse_args()
+
+    try:
+        all_correct, n_correct, correct_flags = flag.check_flags_list(args.names)
+        return_value = f"{int(all_correct)} {n_correct} {len(correct_flags)}"
+        sys.stdout.buffer.write(return_value.encode("utf-8"))
+    except IOError as e:
+        sys.stderr.write(f"An error occured while adding a new flag: {e}")
+        sys.exit(2)

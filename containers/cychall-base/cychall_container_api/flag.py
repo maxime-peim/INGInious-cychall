@@ -41,18 +41,27 @@ def check_flag(flag_name):
      
     return gflag == sflag
 
-def check_all_flag():
+def check_flags_list(flag_names=None):
     generated_flags = _load_flags(True)
     student_flags = _load_flags(False)
 
+    if flag_names is None:
+        flag_names = generated_flags.values()
+
+    if not all(flag_name in generated_flags for flag_name in flag_names):
+        raise ValueError("Some required flags do not exist.")
+
     correct_flags = {
-        flag_name: gflag == sflag
-        for (flag_name, gflag), sflag in zip(generated_flags.items(), student_flags.values())
+        flag_name: generated_flags[flag_name] == student_flags[flag_name]
+        for flag_name in flag_names
     }
     n_correct = sum(correct_flags.values())
     all_correct = n_correct == len(correct_flags)
 
     return all_correct, n_correct, correct_flags
+
+def check_all_flags():
+    return check_flags_list()
 
 def add_flag(flag_name, flag_value):
     generated_flags = _load_flags(True)

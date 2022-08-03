@@ -1,0 +1,22 @@
+#!/bin/python3
+# -*- coding: utf-8 -*-
+#
+# This file is part of INGInious. See the LICENSE and the COPYRIGHTS files for
+# more information about the licensing of this file.
+
+import argparse
+import sys
+
+from cychall_container_api import flag
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawTextHelpFormatter,
+        description="Generate a new flag.\n",
+    )
+    parser.add_argument("--prefix", type=str, help="Prefix for the flag randomness", default="INGInious")
+    parser.add_argument("--size", type=int, help="Number of random bytes to generate", default=16)
+    args = parser.parse_args()
+
+    generated_flag = flag.generate_flag(prefix=args.prefix, size=args.size)
+    sys.stdout.buffer.write(generated_flag.encode("utf-8"))
