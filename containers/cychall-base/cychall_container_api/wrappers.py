@@ -148,6 +148,10 @@ Don't forget to use the `found-flag` command to validate it.
     Flag: {next_user_pwd}
 The flag is the password of the next user: {next_user}!\n\n"""
             )
+            next_user_uid = utils.get_uid(next_user)
+            next_user_gid = utils.get_gid(next_user)
+            os.chown(flag_file, next_user_uid, next_user_gid)
+            os.chmod(flag_file, 0o440)
     else:
         sys.stderr.write(f"An error occurred while changing the user password:\n{std_err}\n")
         sys.exit(2)
