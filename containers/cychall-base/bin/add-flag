@@ -21,6 +21,7 @@ if __name__ == "__main__":
     try:
         flag_value = args.value if args.value is not None else flag.generate_flag()
         flag.add_flag(args.name, flag_value)
+        sys.stdout.buffer.write(flag_value.encode("utf-8"))
     except IOError as e:
         sys.stderr.write(f"An error occured while adding a new flag: {e}")
         sys.exit(2)

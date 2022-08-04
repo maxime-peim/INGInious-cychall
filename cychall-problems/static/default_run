@@ -1,5 +1,23 @@
 #!/bin/bash
 
-# Configuration has to be done directly onto the student container
-ssh_student --user step1 --script-as-root --setup-script "generate-steps"
-check-flag --student-flag-path /task/student/answer --correct-flag-path /task/student/end/flag
+ssh_student --user step1 --script-as-root --setup-script "cychall-build"
+IFS=" " read -r all_correct n_correct n_flags <<< $(check-flag)
+
+if [ "$n_flags" -eq "0" ]; then
+    feedback --result success --feedback "There was no flag to find."
+else
+    if [ "$all_correct" -eq "1" ]; then
+        feedback-result success
+        message="Congratulations"
+    else
+        feedback-result failed
+        message="Keep going"
+    fi
+
+    message="$message!
+
+You found $n_correct out of $n_flags flags."
+    
+    feedback-grade $((100*n_correct/n_flags))
+    feedback --feedback "$message"
+fi

@@ -46,7 +46,7 @@ def check_flags_list(flag_names=None):
     student_flags = _load_flags(False)
 
     if flag_names is None:
-        flag_names = generated_flags.values()
+        flag_names = generated_flags.keys()
 
     if not all(flag_name in generated_flags for flag_name in flag_names):
         raise ValueError("Some required flags do not exist.")
