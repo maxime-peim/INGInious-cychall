@@ -22,12 +22,13 @@ if __name__ == "__main__":
     parser.add_argument("mode", help="Wrapper mode")
     parser.add_argument("-o", "--output", help="Output filename", default="wrapped")
     parser.add_argument("-c", "--command", help="Custom start command", default=None)
+    parser.add_argument("-f", "--flag", help="Flag to use as password for next user", default=None)
     args = parser.parse_args()
 
     executable = args.executable
     mode = args.mode
 
-    kwargs = {"outfile": args.output, "command": args.command}
+    kwargs = {"outfile": args.output, "command": args.command, "pwd_flag": args.flag}
 
     try:
         wrapper_function = wrappers.resolve(mode)

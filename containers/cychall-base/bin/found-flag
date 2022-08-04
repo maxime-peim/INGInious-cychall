@@ -14,7 +14,7 @@ from cychall_container_api import flag
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawTextHelpFormatter,
-        description="Did you found a flag?.\n",
+        description="Did you find a flag?.\n",
     )
     parser.add_argument("flag", help="The current flag.", type=str)
     parser.add_argument("--name", help="The name of the flag. If not given, the current username is used.", type=str)

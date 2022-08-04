@@ -3,10 +3,12 @@
 import os
 import stat
 import sys
+import subprocess
 
 import steps
 import utils
 import config
+import flag
 import inginious_container_api.utils
 
 
@@ -117,8 +119,38 @@ def __wrapper_shell_python(
         sys.exit(2)
 
 
-def __wrapper_password(challenge_file_path, **kwargs):
-    pass
+def __wrapper_password(challenge_file_path, *, outfile="wrapped", command=None, pwd_flag=None, **kwargs):
+    step_configuration = steps.get_config()
+    next_user = step_configuration["next-user"]
+    current_user = step_configuration["current-user"]
+    
+    # Generate flag
+    if pwd_flag is None:
+        next_user_pwd = flag.generate_flag() if next_user != "end" else flag._load_flags()["end"]
+    else:
+        next_user_pwd = pwd_flag
+    
+    # Change next_user password
+    std_out, std_err = inginious_container_api.utils.execute_process(["/usr/bin/bash", "-c", "echo '{}:{}' | chpasswd".format(next_user, next_user_pwd)],
+                    internal_command=True, user='root')
+    
+    if not std_err:
+        if next_user != "end" and pwd_flag is None:
+            # Add flag
+            flag.add_flag(current_user, next_user_pwd)
+            # Save to file
+            flag_file = os.path.join(config.STUDENT_DIR, next_user, 'flag')
+
+            with open(flag_file, 'w') as f:
+                f.write(
+                f"""Well done, you have found the flag for {current_user}!
+Don't forget to use the `found-flag` command to validate it.
+    Flag: {next_user_pwd}
+The flag is the password of the next user: {next_user}!\n\n"""
+            )
+    else:
+        sys.stderr.write(f"An error occurred while changing the user password:\n{std_err}\n")
+        sys.exit(2)
 
 
 def __wrapper_ssh(challenge_file_path, **kwargs):
