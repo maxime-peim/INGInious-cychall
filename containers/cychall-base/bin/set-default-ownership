@@ -21,7 +21,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     folder = args.folder
-    next_user = steps.get_config("next-user")
+    next_user = steps.get_from_context("next-user")
 
     try:
         utils.recursive_chown(folder, next_user, next_user)#, "worker")

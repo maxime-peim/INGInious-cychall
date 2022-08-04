@@ -11,23 +11,28 @@ from inginious_container_api.run_types import run_types
 _step_configuration_filename = os.path.join(config.SCRIPT_DIR, ".__step.yaml")
 
 
-def _load_step_config():
+def _load_step_context():
     with open(_step_configuration_filename, "r") as step_in:
         return yaml.safe_load(step_in)
 
 
-def get_config(field_name=None):
-    step_configuration = _load_step_config()
+def _save_step_context(context):
+    with open(_step_configuration_filename, "w") as flags_out:
+        return yaml.safe_dump(context, flags_out)
+
+
+def get_from_context(field_name=None):
+    step_context = _load_step_context()
     if field_name is None:
-        return step_configuration
+        return step_context
 
     field_split = field_name.split(":")
-    if field_split[0] not in step_configuration:
+    if field_split[0] not in step_context:
         raise ValueError(f"'{field_split[0]}' field not found.")
 
-    field_configuration = step_configuration[field_split[0]]
+    field_configuration = step_context[field_split[0]]
     if (
-        isinstance(step_configuration, dict)
+        isinstance(step_context, dict)
         and "filename" in field_configuration
         and "value" in field_configuration
     ):
@@ -38,6 +43,17 @@ def get_config(field_name=None):
                 return fin.read()
     else:
         return field_configuration
+
+
+def add_to_context(name, value):
+    step_context = _load_step_context()
+
+    if name in ("current-user", "step-switch", "problemid", "template", "difficulty", "next-user"):
+        raise ValueError(f"'{name}' cannot be overwritten in the step context.")
+
+    step_context[name] = value
+
+    _save_step_context(step_context)
 
 
 def fix_output_directory_permissions(path):

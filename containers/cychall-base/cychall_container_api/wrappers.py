@@ -35,7 +35,7 @@ def __wrapper_shell_c(
     wrapper_file = "shell-c.j2"
     wrapper_path = os.path.join(config.WRAPPER_DIR, wrapper_file)
     executable = os.path.basename(challenge_file_path)
-    step_configuration = steps.get_config()
+    step_configuration = steps.get_from_context()
 
     if command is None:
         command = "./" + executable
@@ -78,7 +78,7 @@ def __wrapper_shell_python(
     wrapper_file = "shell-python.j2"
     wrapper_path = os.path.join(config.WRAPPER_DIR, wrapper_file)
     executable = os.path.basename(challenge_file_path)
-    step_configuration = steps.get_config()
+    step_configuration = steps.get_from_context()
 
     if command is None:
         command = "./" + executable
@@ -119,46 +119,46 @@ def __wrapper_shell_python(
         sys.exit(2)
 
 
-def __wrapper_password(challenge_file_path, *, outfile="wrapped", command=None, pwd_flag=None, **kwargs):
-    step_configuration = steps.get_config()
+def __wrapper_password(challenge_file_path, *, pwd_flag=None, **kwargs):
+    step_configuration = steps.get_from_context()
     next_user = step_configuration["next-user"]
     current_user = step_configuration["current-user"]
     
     # Generate flag
     if pwd_flag is None:
-        next_user_pwd = flag.generate_flag() if next_user != "end" else flag._load_flags()["end"]
+        next_user_pwd = flag.generate_flag() if next_user != "end" else flag.get_flag("end")
     else:
         next_user_pwd = pwd_flag
     
     # Change next_user password
-    std_out, std_err = inginious_container_api.utils.execute_process(["/usr/bin/bash", "-c", "echo '{}:{}' | chpasswd".format(next_user, next_user_pwd)],
+    std_out, std_err = inginious_container_api.utils.execute_process(["/usr/bin/bash", "-c", f"echo '{next_user}:{next_user_pwd}' | chpasswd"],
                     internal_command=True, user='root')
     
-    if not std_err:
-        if next_user != "end" and pwd_flag is None:
-            # Add flag
-            flag.add_flag(current_user, next_user_pwd)
-            # Save to file
-            flag_file = os.path.join(config.STUDENT_DIR, next_user, 'flag')
-
-            with open(flag_file, 'w') as f:
-                f.write(
-                f"""Well done, you have found the flag for {current_user}!
-Don't forget to use the `found-flag` command to validate it.
-    Flag: {next_user_pwd}
-The flag is the password of the next user: {next_user}!\n\n"""
-            )
-    else:
+    if std_err:
         sys.stderr.write(f"An error occurred while changing the user password:\n{std_err}\n")
         sys.exit(2)
+    
+    if next_user != "end" and pwd_flag is None:
+        # Add flag
+        flag.add_flag(current_user, next_user_pwd)
+        # Save to file
+        flag_file = os.path.join(config.STUDENT_DIR, next_user, 'flag')
+
+        with open(flag_file, 'w') as f:
+            f.write(
+            f"""Well done, you have found the flag for {current_user}!
+Don't forget to use the `found-flag` command to validate it.
+Flag: {next_user_pwd}
+The flag is the password of the next user: {next_user}\n\n"""
+        )
 
 
 def __wrapper_ssh(challenge_file_path, **kwargs):
     # ne marche pas, je n'arrive pas à me connecter en tant que l'utilisateur
     # suivant... je pense que c'est à cause des paramètres de sshd lors du
     # lancement du student container
-    current_user = steps.get_config("current-user")
-    next_user = steps.get_config("next-user")
+    current_user = steps.get_from_context("current-user")
+    next_user = steps.get_from_context("next-user")
     current_ssh_folder = os.path.join(os.getcwd(), ".ssh")
     next_ssh_folder = os.path.join(utils.get_home(next_user), ".ssh")
     id_file = os.path.join(current_ssh_folder, next_user)

@@ -1,0 +1,28 @@
+#!/bin/python3
+# -*- coding: utf-8 -*-
+#
+# This file is part of INGInious. See the LICENSE and the COPYRIGHTS files for
+# more information about the licensing of this file.
+
+import argparse
+import sys
+
+from cychall_container_api import steps
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawTextHelpFormatter,
+        description="Add data to the current step context.\n",
+    )
+    parser.add_argument("name", help="field name")
+    parser.add_argument("value", help="field value")
+    args = parser.parse_args()
+
+    try:
+        steps.add_to_context(args.name, args.value)
+    except IOError as e:
+        sys.stderr.write(f"Configuration file not found: {e}")
+        sys.exit(2)
+    except ValueError as e:
+        sys.stderr.write(f"Configuration is not compatible: {e}")
+        sys.exit(2)

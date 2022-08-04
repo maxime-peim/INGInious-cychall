@@ -144,7 +144,7 @@ def parse(infile, render_parameters=None, extensions=None):
 def parse_template(outfile, infile):
     parsed = parse(
         infile,
-        {"options": steps.get_config()},
+        {"options": steps.get_from_context()},
         extensions=["jinja2_ansible_filters.AnsibleCoreFiltersExtension"],
     )
 

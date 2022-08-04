@@ -15,12 +15,12 @@ if __name__ == "__main__":
         formatter_class=argparse.RawTextHelpFormatter,
         description="Get data associated with an configuration field.\n",
     )
-    parser.add_argument("field", help="field name")
+    parser.add_argument("name", help="field name")
     args = parser.parse_args()
 
     # Do the real job
     try:
-        result = steps.get_config(args.field)
+        result = steps.get_from_context(args.name)
         if isinstance(result, bytes):
             sys.stdout.buffer.write(result)
         elif isinstance(result, (str, int, float)):

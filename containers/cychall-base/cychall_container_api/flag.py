@@ -85,3 +85,7 @@ def update_student_flag(flag_name, flag_value):
 
 def generate_flag(*, prefix="INGInious", size=16, **kwargs):
     return f"{prefix}{{{secrets.token_hex(size)}}}"
+
+def get_flag(flag_name):
+    generated_flags = _load_flags(True)
+    return generated_flags.get(flag_name, None)
