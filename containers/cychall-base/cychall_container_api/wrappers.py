@@ -134,23 +134,27 @@ def __wrapper_password(challenge_file_path, *, pwd_flag=None, **kwargs):
     std_out, std_err = inginious_container_api.utils.execute_process(["/usr/bin/bash", "-c", f"echo '{next_user}:{next_user_pwd}' | chpasswd"],
                     internal_command=True, user='root')
     
-    if std_err:
+    if not std_err:
+        if next_user != "end" and pwd_flag is None:
+            # Add flag
+            flag.add_flag(current_user, next_user_pwd)
+            # Save to file
+            flag_file = os.path.join(config.STUDENT_DIR, next_user, 'flag')
+
+            with open(flag_file, 'w') as f:
+                f.write(
+                f"""Well done, you have found the flag for {current_user}!
+Don't forget to use the `found-flag` command to validate it.
+    Flag: {next_user_pwd}
+The flag is the password of the next user: {next_user}!\n\n"""
+            )
+            next_user_uid = utils.get_uid(next_user)
+            next_user_gid = utils.get_gid(next_user)
+            os.chown(flag_file, next_user_uid, next_user_gid)
+            os.chmod(flag_file, 0o440)
+    else:
         sys.stderr.write(f"An error occurred while changing the user password:\n{std_err}\n")
         sys.exit(2)
-    
-    if next_user != "end" and pwd_flag is None:
-        # Add flag
-        flag.add_flag(current_user, next_user_pwd)
-        # Save to file
-        flag_file = os.path.join(config.STUDENT_DIR, next_user, 'flag')
-
-        with open(flag_file, 'w') as f:
-            f.write(
-            f"""Well done, you have found the flag for {current_user}!
-Don't forget to use the `found-flag` command to validate it.
-Flag: {next_user_pwd}
-The flag is the password of the next user: {next_user}\n\n"""
-        )
 
 
 def __wrapper_ssh(challenge_file_path, **kwargs):
