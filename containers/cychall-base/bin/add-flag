@@ -1,0 +1,27 @@
+#!/bin/python3
+# -*- coding: utf-8 -*-
+#
+# This file is part of INGInious. See the LICENSE and the COPYRIGHTS files for
+# more information about the licensing of this file.
+
+import argparse
+import sys
+
+from cychall_container_api import flag
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawTextHelpFormatter,
+        description="Add a new flag to the system.\n",
+    )
+    parser.add_argument("name", type=str, help="The name of the flag.")
+    parser.add_argument("--value", type=str, help="The value of the flag. If not given, a new flag is generated with prefix 'INGInious' and 16 random bytes.")
+    args = parser.parse_args()
+
+    try:
+        flag_value = args.value if args.value is not None else flag.generate_flag()
+        flag.add_flag(args.name, flag_value)
+        sys.stdout.buffer.write(flag_value.encode("utf-8"))
+    except IOError as e:
+        sys.stderr.write(f"An error occured while adding a new flag: {e}")
+        sys.exit(2)

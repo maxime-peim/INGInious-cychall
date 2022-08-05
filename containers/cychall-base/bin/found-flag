@@ -1,0 +1,30 @@
+#!/bin/python3
+# -*- coding: utf-8 -*-
+#
+# This file is part of INGInious. See the LICENSE and the COPYRIGHTS files for
+# more information about the licensing of this file.
+
+import argparse
+import sys
+
+from cychall_container_api import utils
+from cychall_container_api import flag
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawTextHelpFormatter,
+        description="Did you find a flag?.\n",
+    )
+    parser.add_argument("flag", help="The current flag.", type=str)
+    parser.add_argument("--name", help="The name of the flag. If not given, the current username is used.", type=str)
+    args = parser.parse_args()
+
+    student_flag = args.flag
+    name = args.name if args.name is not None else utils.get_username()
+
+    try:
+        flag.update_student_flag(name, student_flag)
+    except ValueError:
+        sys.stderr.write("There is no flag to find in this step.")
+        sys.exit(2)

@@ -9,28 +9,30 @@
 import argparse
 import sys
 
-# import cychall_container_api.utils as utils
-import cychall_container_api.wrappers as wrappers
+# from cychall_container_api import utils
+from cychall_container_api import wrappers
 
-parser = argparse.ArgumentParser(
-    formatter_class=argparse.RawTextHelpFormatter,
-    description="Add wrapper to executable.",
-    epilog="Input data must have been passed through INGInious program.",
-)
-parser.add_argument("executable", help="Input filename")
-parser.add_argument("mode", help="Wrapper mode")
-parser.add_argument("-o", "--output", help="Output filename", default="wrapped")
-parser.add_argument("-c", "--command", help="Custom start command", default=None)
-args = parser.parse_args()
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawTextHelpFormatter,
+        description="Add wrapper to executable.",
+        epilog="Input data must have been passed through INGInious program.",
+    )
+    parser.add_argument("executable", help="Input filename")
+    parser.add_argument("mode", help="Wrapper mode")
+    parser.add_argument("-o", "--output", help="Output filename", default="wrapped")
+    parser.add_argument("-c", "--command", help="Custom start command", default=None)
+    parser.add_argument("-f", "--flag", help="Flag to use as password for next user", default=None)
+    args = parser.parse_args()
 
-executable = args.executable
-mode = args.mode
+    executable = args.executable
+    mode = args.mode
 
-kwargs = {"outfile": args.output, "command": args.command}
+    kwargs = {"outfile": args.output, "command": args.command, "pwd_flag": args.flag}
 
-try:
-    wrapper_function = wrappers.resolve(mode)
-    wrapper_function(executable, **kwargs)
-except ValueError as e:
-    sys.stderr.write(e)
-    sys.exit(2)
+    try:
+        wrapper_function = wrappers.resolve(mode)
+        wrapper_function(executable, **kwargs)
+    except ValueError as e:
+        sys.stderr.write(e)
+        sys.exit(2)

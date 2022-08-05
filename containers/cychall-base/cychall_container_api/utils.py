@@ -2,10 +2,10 @@ import grp
 import os
 import pwd
 import sys
-
-import cychall_container_api.steps as steps
-import inginious_container_api.utils
 from jinja2 import Environment, FileSystemLoader
+
+import steps
+import inginious_container_api.utils
 
 
 def extract_value(direct_value, value_path):
@@ -128,8 +128,9 @@ def get_all_parts_path(path):
     return parts[::-1]
 
 
-def parse(infile, render_parameters, extensions=None):
+def parse(infile, render_parameters=None, extensions=None):
     extensions = [] if extensions is None else extensions
+    render_parameters = {} if render_parameters is None else render_parameters
     env = Environment(
         loader=FileSystemLoader(os.path.dirname(os.path.abspath(infile))),
         trim_blocks=True,
@@ -143,7 +144,7 @@ def parse(infile, render_parameters, extensions=None):
 def parse_template(outfile, infile):
     parsed = parse(
         infile,
-        {"options": steps.get_config()},
+        {"options": steps.get_from_context()},
         extensions=["jinja2_ansible_filters.AnsibleCoreFiltersExtension"],
     )
 

@@ -1,0 +1,23 @@
+name: Command injection
+options:
+    difficulties:
+        - Easy
+        - Hard
+    elements:
+        - id: blacklist
+          label: Blacklisted commands
+          type: text
+          placeholder: List of commands separated by ','
+          value: ls,cat,sh,less,more,whoami,echo,head,tac,grep
+          modes:
+            - Hard
+        - id: buffer_size
+          label: Command buffer size
+          type: text
+          placeholder: Size of command buffer
+          value: 30
+        - id: open_source
+          label: Access to challenge source file
+          type: checkbox
+          checked: false
+

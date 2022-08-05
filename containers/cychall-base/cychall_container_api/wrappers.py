@@ -3,12 +3,13 @@
 import os
 import stat
 import sys
+import subprocess
 
-import cychall_container_api.steps as steps
-import cychall_container_api.utils as utils
+import steps
+import utils
+import config
+import flag
 import inginious_container_api.utils
-
-WRAPPER_FILES_PATH = "/etc/cychall/wrappers"
 
 
 def __wrapper_sgid(challenge_file_path, **kwargs):
@@ -24,7 +25,7 @@ def __wrapper_suid(challenge_file_path, **kwargs):
 def __wrapper_sguid(challenge_file_path, **kwargs):
     challenge_permissions = os.stat(challenge_file_path)
     os.chmod(
-        challenge_file_path, challenge_permissions.st_mode | stat.S_ISUID | stat.S_ISUID
+        challenge_file_path, challenge_permissions.st_mode | stat.S_ISUID | stat.S_ISGID
     )
 
 
@@ -32,16 +33,16 @@ def __wrapper_shell_c(
     challenge_file_path, *, outfile="wrapped", command=None, **kwargs
 ):
     wrapper_file = "shell-c.j2"
-    wrapper_path = os.path.join(WRAPPER_FILES_PATH, wrapper_file)
+    wrapper_path = os.path.join(config.WRAPPER_DIR, wrapper_file)
     executable = os.path.basename(challenge_file_path)
-    step_configuration = steps.get_config()
+    step_configuration = steps.get_from_context()
 
     if command is None:
         command = "./" + executable
 
     parsed = utils.parse(
         wrapper_path,
-        {"executable": executable, "command": command, "options": step_configuration},
+        render_parameters={"executable": executable, "command": command, "options": step_configuration},
     )
 
     try:
@@ -50,14 +51,15 @@ def __wrapper_shell_c(
 
         next_user = step_configuration["next-user"]
         next_user_uid = utils.get_uid(next_user)
+        next_user_gid = utils.get_gid(next_user)
 
         utils.compile_gcc("__shell.c", outfile, remove_source=True)
 
-        os.chown(outfile, next_user_uid, next_user_uid)
-        os.chmod(outfile, 0o6551)
+        os.chown(outfile, next_user_uid, next_user_gid)
+        os.chmod(outfile, 0o5551)
 
-        os.chown(executable, next_user_uid, 4242)
-        os.chmod(executable, 0o500)
+        os.chown(executable, next_user_uid, next_user_gid)
+        os.chmod(executable, 0o555)
 
     except FileExistsError as e:
         sys.stderr.write("Error: " + str(e))
@@ -74,16 +76,16 @@ def __wrapper_shell_python(
     challenge_file_path, *, outfile="wrapped", command=None, **kwargs
 ):
     wrapper_file = "shell-python.j2"
-    wrapper_path = os.path.join(WRAPPER_FILES_PATH, wrapper_file)
+    wrapper_path = os.path.join(config.WRAPPER_DIR, wrapper_file)
     executable = os.path.basename(challenge_file_path)
-    step_configuration = steps.get_config()
+    step_configuration = steps.get_from_context()
 
     if command is None:
         command = "./" + executable
 
     parsed = utils.parse(
         wrapper_path,
-        {"executable": executable, "command": command, "options": step_configuration},
+        render_parameters={"executable": executable, "command": command, "options": step_configuration},
     )
 
     try:
@@ -93,14 +95,18 @@ def __wrapper_shell_python(
         current_user = step_configuration["current-user"]
         next_user = step_configuration["next-user"]
         next_user_uid = utils.get_uid(next_user)
+        next_user_gid = utils.get_gid(next_user)
 
         with open("/etc/sudoers", "a") as sudoers:
             sudoers.write(
                 f"{current_user} ALL=({next_user}) NOPASSWD: {os.path.abspath(outfile)}\n"
             )
 
-        os.chown(outfile, next_user_uid, 4242)
-        os.chmod(outfile, 0o550)
+        os.chown(outfile, next_user_uid, next_user_gid)
+        os.chmod(outfile, 0o555)
+
+        os.chown(challenge_file_path, next_user_uid, next_user_gid)
+        os.chmod(challenge_file_path, 0o555)
 
     except FileExistsError as e:
         sys.stderr.write(f"Error: {e}")
@@ -113,16 +119,50 @@ def __wrapper_shell_python(
         sys.exit(2)
 
 
-def __wrapper_password(challenge_file_path, **kwargs):
-    pass
+def __wrapper_password(challenge_file_path, *, pwd_flag=None, **kwargs):
+    step_configuration = steps.get_from_context()
+    next_user = step_configuration["next-user"]
+    current_user = step_configuration["current-user"]
+    
+    # Generate flag
+    if pwd_flag is None:
+        next_user_pwd = flag.generate_flag() if next_user != "end" else flag.get_flag("end")
+    else:
+        next_user_pwd = pwd_flag
+    
+    # Change next_user password
+    std_out, std_err = inginious_container_api.utils.execute_process(["/usr/bin/bash", "-c", f"echo '{next_user}:{next_user_pwd}' | chpasswd"],
+                    internal_command=True, user='root')
+    
+    if std_err:
+        sys.stderr.write(f"An error occurred while changing the user password:\n{std_err}\n")
+        sys.exit(2)
+
+    if next_user != "end" and pwd_flag is None:
+        # Add flag
+        flag.add_flag(current_user, next_user_pwd)
+        # Save to file
+        flag_file = os.path.join(config.STUDENT_DIR, next_user, 'flag')
+
+        with open(flag_file, 'w') as f:
+            f.write(
+            f"""Well done, you have found the flag for {current_user}!
+Don't forget to use the `found-flag` command to validate it.
+Flag: {next_user_pwd}
+The flag is the password of the next user: {next_user}!\n\n"""
+        )
+        next_user_uid = utils.get_uid(next_user)
+        next_user_gid = utils.get_gid(next_user)
+        os.chown(flag_file, next_user_uid, next_user_gid)
+        os.chmod(flag_file, 0o440)
 
 
 def __wrapper_ssh(challenge_file_path, **kwargs):
     # ne marche pas, je n'arrive pas à me connecter en tant que l'utilisateur
     # suivant... je pense que c'est à cause des paramètres de sshd lors du
     # lancement du student container
-    current_user = steps.get_config("current-user")
-    next_user = steps.get_config("next-user")
+    current_user = steps.get_from_context("current-user")
+    next_user = steps.get_from_context("next-user")
     current_ssh_folder = os.path.join(os.getcwd(), ".ssh")
     next_ssh_folder = os.path.join(utils.get_home(next_user), ".ssh")
     id_file = os.path.join(current_ssh_folder, next_user)
@@ -142,14 +182,10 @@ def __wrapper_ssh(challenge_file_path, **kwargs):
         [
             "/usr/bin/ssh-keygen",
             "-q",  # quiet
-            "-f",
-            id_file,
-            "-t",
-            "ecdsa",
-            "-b",
-            "521",
-            "-N",
-            "''",  # no passphrase
+            "-f", id_file,
+            "-t", "ecdsa",
+            "-b", "521",
+            "-N", "''",  # no passphrase
         ],
         internal_command=True,
         user=utils.get_username(),
@@ -165,7 +201,6 @@ def __wrapper_ssh(challenge_file_path, **kwargs):
     os.chmod(auth_keys_file, 0o644)
     os.chmod(f"{id_file}.pub", 0o644)
     os.chmod(id_file, 0o600)
-
 
 wrappers = {
     "sgid": __wrapper_sgid,

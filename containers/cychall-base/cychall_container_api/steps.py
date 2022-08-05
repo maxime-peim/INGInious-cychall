@@ -1,33 +1,38 @@
 import os
 import pwd
-
-import config
-import flag
-import inginious_container_api.utils
-import utils
 import yaml
+
+import flag
+import utils
+import config
+import inginious_container_api.utils
 from inginious_container_api.run_types import run_types
 
-_step_configuration_filename = os.path.join(config._default_scripts_dir, ".__step.yaml")
+_step_configuration_filename = os.path.join(config.SCRIPT_DIR, ".__step.yaml")
 
 
-def _load_step_config():
+def _load_step_context():
     with open(_step_configuration_filename, "r") as step_in:
         return yaml.safe_load(step_in)
 
 
-def get_config(field_name=None):
-    step_configuration = _load_step_config()
+def _save_step_context(context):
+    with open(_step_configuration_filename, "w") as flags_out:
+        return yaml.safe_dump(context, flags_out)
+
+
+def get_from_context(field_name=None):
+    step_context = _load_step_context()
     if field_name is None:
-        return step_configuration
+        return step_context
 
     field_split = field_name.split(":")
-    if field_split[0] not in step_configuration:
+    if field_split[0] not in step_context:
         raise ValueError(f"'{field_split[0]}' field not found.")
 
-    field_configuration = step_configuration[field_split[0]]
+    field_configuration = step_context[field_split[0]]
     if (
-        isinstance(step_configuration, dict)
+        isinstance(step_context, dict)
         and "filename" in field_configuration
         and "value" in field_configuration
     ):
@@ -38,6 +43,17 @@ def get_config(field_name=None):
                 return fin.read()
     else:
         return field_configuration
+
+
+def add_to_context(name, value):
+    step_context = _load_step_context()
+
+    if name in ("current-user", "step-switch", "problemid", "template", "difficulty", "next-user"):
+        raise ValueError(f"'{name}' cannot be overwritten in the step context.")
+
+    step_context[name] = value
+
+    _save_step_context(step_context)
 
 
 def fix_output_directory_permissions(path):
@@ -104,7 +120,7 @@ class Step:
 
         utils.copy_skel_files(self._step_folder)
 
-        os.chmod(self._step_folder, 0o750)
+        os.chmod(self._step_folder, 0o550)
         os.chown(
             self._step_folder, self._user_infos.pw_uid, self._next_user_infos.pw_uid
         )
@@ -134,8 +150,6 @@ class Step:
 
         setup_command = self._detect_script_command("setup")
 
-        # self._allow_remove_passwd()
-
         self._write_step_config()
 
         if setup_command is not None:
@@ -156,9 +170,15 @@ class EndStep(Step):
         os.makedirs(self._step_folder, exist_ok=True)
         self._create_associated_user()
 
-        # self._allow_remove_passwd()
+        flag_value = flag.generate_flag()
+        with open(os.path.join(self._step_folder, "flag"), "w") as fp:
+            fp.write(
+                f"""Well done, you have found the final flag!
+Don't forget to use the `found-flag` command to validate the flag.
 
-        flag.write_flag(flag.generate_flag(), os.path.join(self._step_folder, "flag"))
+Flag: {flag_value}\n\n"""
+            )
+        flag.add_flag(self._name, flag_value)
 
         utils.recursive_chown(self._step_folder, self._name, "worker", inside=True)
 

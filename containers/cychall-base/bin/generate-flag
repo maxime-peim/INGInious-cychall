@@ -7,44 +7,16 @@
 import argparse
 import sys
 
-import cychall_container_api.flag as flag
+from cychall_container_api import flag
 
-parser = argparse.ArgumentParser(
-    formatter_class=argparse.RawTextHelpFormatter,
-    description="Generate a flag and place it in a file.\n",
-)
-parser.add_argument(
-    "--prefix", help="Prefix for the flag: PREFIX{...}", default="INGInious"
-)
-parser.add_argument(
-    "--student-read",
-    help="Has the student the right to read the flag file. (make sense only if output file specified)",
-    action="store_true",
-)
-parser.add_argument(
-    "--random-size",
-    help="Number of random bytes needed to generate the flag.",
-    default=16,
-)
-parser.add_argument(
-    "--output",
-    help="Path to the output file in which the flag will be stored. Default: None, the flag is returned.",
-    default=None,
-)
-args = parser.parse_args()
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawTextHelpFormatter,
+        description="Generate a new flag.\n",
+    )
+    parser.add_argument("--prefix", type=str, help="Prefix for the flag randomness", default="INGInious")
+    parser.add_argument("--size", type=int, help="Number of random bytes to generate", default=16)
+    args = parser.parse_args()
 
-prefix = args.prefix
-student_read = args.student_read
-random_size = args.random_size
-output_path = args.output
-
-flag = flag.generate_flag(prefix=prefix, size=random_size)
-
-if output_path is None:
-    sys.stdout.buffer.write(flag.encode("utf-8"))
-else:
-    try:
-        flag.write_flag(flag, output_path, student_read=student_read)
-    except OSError:
-        sys.stderr.buffer.write(b"Error while writing the flag.")
-        sys.exit(2)
+    generated_flag = flag.generate_flag(prefix=args.prefix, size=args.size)
+    sys.stdout.buffer.write(generated_flag.encode("utf-8"))

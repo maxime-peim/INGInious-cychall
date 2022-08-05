@@ -75,8 +75,8 @@ class Template:
         return self._options.get("difficulties", ["Easy"])
 
     @property
-    def next_step_switch(self):
-        return self._options.get("next-step-switch", "custom")
+    def step_switch(self):
+        return self._options.get("step-switch", "custom")
 
     def delete(self):
         """Delete the template's files"""
@@ -298,14 +298,10 @@ class TemplateManager:
         course_template_folder = self.get_course_template_folder(
             courseid, ensure_exists=True
         )
-        common_template_folder = self._template_folders["$common"]
 
         # Check if the template id is available in the folder
         if course_template_folder.template_exists(templateid):
             raise TemplateIDExists(templateid, course_template_folder.path)
-
-        if common_template_folder.template_exists(templateid):
-            raise TemplateIDExists(templateid, common_template_folder.path)
 
         course_template_folder.add_template_from_files(templateid, files)
 

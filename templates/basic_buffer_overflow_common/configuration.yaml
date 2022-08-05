@@ -1,0 +1,20 @@
+name: Basic Buffer Overflow
+options:
+    difficulties:
+        - Easy
+        - Medium
+        - Hard
+    elements:
+        - id: use_random
+          label: Random password
+          type: checkbox
+          checked: false
+        - id: specific_value
+          label: Specific value to overflow
+          type: select
+          values:
+            - 0xdeadbeef
+            - 0xdeadc0de
+            - 0xc001
+          modes:
+            - Hard

@@ -1,0 +1,39 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+
+int main()
+{
+    char buffer[{{ range(100, 501) | random }}];
+    int pass = 0;
+
+    printf("\n Enter the password : \n");
+    gets(buffer);
+
+    {% if options["use_random"] %}
+        {% set password = range(1000) | random | hash('md5') %}
+    {% else %}
+        {% set password = "St4t1c P455w0rD" %}
+    {% endif %}
+    
+    if(strcmp(buffer, "{{ password }}")) {
+        printf ("\n Wrong Password \n");
+    }
+    else {
+        printf ("\n Correct Password \n");
+        pass = 1;
+    }
+
+    int not_change_user = 1;
+
+    {% if options["difficulty"] != "Hard" %}
+    if(pass)
+    {% else %}
+    if(pass == {{ options["specific_value"] }})
+    {% endif %}
+        not_change_user = 0;
+
+    exit(not_change_user);
+}

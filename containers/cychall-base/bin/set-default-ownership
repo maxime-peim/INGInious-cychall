@@ -5,19 +5,26 @@
 # more information about the licensing of this file.
 #
 # Tool to import answer from standard input to the template files given in arguments
-
 import argparse
+import sys
 
+from cychall_container_api import steps
 from cychall_container_api import utils
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawTextHelpFormatter,
-        description="Parse the template file and generate an output file.",
+        description="Set the default permissions inside a step folder.",
         epilog="Input data must have been passed through INGInious program.",
     )
-    parser.add_argument("input", help="Input filename")
-    parser.add_argument("output", help="Output filename")
+    parser.add_argument("folder", help="Step folder")
     args = parser.parse_args()
 
-    utils.parse_template(outfile=args.output, infile=args.input)
+    folder = args.folder
+    next_user = steps.get_from_context("next-user")
+
+    try:
+        utils.recursive_chown(folder, next_user, next_user)#, "worker")
+    except ValueError as e:
+        sys.stderr.write(e)
+        sys.exit(2)

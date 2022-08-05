@@ -4,23 +4,7 @@
 #include <sys/types.h>
 #include <stdlib.h>
 
-void setid()
-{
-    setreuid(geteuid(), geteuid());
-    setregid(getegid(), getegid());
-}
-
-void shell()
-{
-    system("/bin/sh");
-}
-
-void super_shell()
-{
-	setid();
-	shell();
-}
-
+{% if options["blacklist"] %}
 int check_blacklist(char *arr[], char* value, int length)
 {
 	int i;
@@ -35,20 +19,37 @@ int check_blacklist(char *arr[], char* value, int length)
 	}
 	return 1;
 }
+{% endif %}
+
 
 int main(int argc, char **argv)
 {
-	char cmd[30] = "ping -c4 ";
+	char cmd[{{ options["buffer_size"] | default(30) }}] = "ping -c4 ";
 	char ip[20];
-	char *blacklist[] = {"ls", "cat", "sh", "less", "more", "whoami", "echo", "head", "tac", "grep"};
+	{% if options["blacklist"] %}
+	{% set blacklisted = options["blacklist"].split(",") %}
+	char *blacklist[] = { {{ blacklisted| map("to_json") | join(", ")}} };
 	int blacklist_length = sizeof(blacklist) / sizeof(*blacklist);
+	{% endif %}
 	printf("Enter an ip to ping: ");
 	fgets(ip, 20, stdin);
 	
+	{% if options["blacklist"] %}
 	if (check_blacklist(blacklist, ip, blacklist_length)){
+    	setreuid(geteuid(), geteuid());
+    	setregid(getegid(), getegid());
 		strcat(cmd, ip);
-		setid();
 		system(cmd);
 	}
+    else {
+    	return 1;
+    }
+	{% else %}
+    setreuid(geteuid(), geteuid());
+    setregid(getegid(), getegid());
+	strcat(cmd, ip);
+	system(cmd);
+	{% endif %}
     return 0;
 }
+

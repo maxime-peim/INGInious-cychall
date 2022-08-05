@@ -1,0 +1,40 @@
+#!/bin/python3
+# -*- coding: utf-8 -*-
+#
+# This file is part of INGInious. See the LICENSE and the COPYRIGHTS files for
+# more information about the licensing of this file.
+
+import argparse
+import json
+import sys
+
+from cychall_container_api import steps
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawTextHelpFormatter,
+        description="Get data associated with an configuration field.\n",
+    )
+    parser.add_argument("name", help="field name")
+    args = parser.parse_args()
+
+    # Do the real job
+    try:
+        result = steps.get_from_context(args.name)
+        if isinstance(result, bytes):
+            sys.stdout.buffer.write(result)
+        elif isinstance(result, (str, int, float)):
+            sys.stdout.buffer.write(str(result).encode("utf-8"))
+        elif isinstance(result, (list, dict)):
+            sys.stdout.buffer.write(json.dumps(result).encode("utf-8"))
+        else:
+            sys.stderr.write(
+                "Invalid/unknown configuration format. Please access it from Python using configuration.get_config."
+            )
+            sys.exit(2)
+    except IOError as e:
+        sys.stderr.write(f"Configuration file not found: {e}")
+        sys.exit(2)
+    except ValueError as e:
+        sys.stderr.write(f"Configuration is not compatible: {e}")
+        sys.exit(2)
