@@ -1,8 +1,8 @@
 #!/bin/bash
 
-next_user=$(get-step-config "next-user")
-difficulty=$(get-step-config "difficulty")
-open_source=$(get-step-config "open_source")
+next_user=$(get-from-context "next-user")
+difficulty=$(get-from-context "difficulty")
+open_source=$(get-from-context "open_source")
 
 # Parse the template and compile the challenge
 parse-template challenge.j2 challenge.c
