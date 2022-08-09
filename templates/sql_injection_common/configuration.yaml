@@ -1,41 +1,15 @@
 name: SQL Injection
 options:
     difficulties:
-        - Easy
-        - Medium
-        - Hard
+        - Direct
+        - Blind
     elements:
-        - id: test
-          label: Test checkbox
+        - id: open_source
+          label: Access to challenge source file
           type: checkbox
           checked: false
-          modes:
-            - Easy
-            - Medium
-        
-        - id: debug
-          label: Debug information
+        - id: username_buffer_size
+          label: Username buffer size
           type: text
-          placeholder: sdfsdfs
-          modes:
-            - Hard
-            - Elite
-        
-        - id: select_test
-          label: test selector
-          type: select
-          default: Item 2
-          values:
-            - Item 1
-            - Item 2
-            - Item 3
-        
-        - id: radio_test
-          label: Radio buttons
-          type: radio
-          default: pp
-          buttons:
-            - id: ee
-              label: eee
-            - id: rr
-              label: eee
+          placeholder: buffer size
+          value: 128

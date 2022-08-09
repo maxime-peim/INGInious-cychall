@@ -1,7 +1,6 @@
+import sys
 import sqlite3
-import uuid
 import random
-
 
 def create_database(filename):
 	con = sqlite3.connect(filename)
@@ -17,18 +16,20 @@ def create_database(filename):
 	con.close()
 
 def insert_rows(con):
-	flag = 'INGInious{' + str(uuid.uuid1()) + '}'
+	next_user = sys.argv[1]
+	flag = sys.argv[2]
 	
 	with open('usernames.txt', 'r', encoding="ascii", errors="surrogateescape") as f:
 		usernames = f.readlines()
-		random_usernames = random.sample(usernames, 19)
-		random_passwords = random.sample(usernames, 19)
-		
-		random_usernames.append('admin')
-		random_passwords.append(flag)
-		
-		for username, password in zip(random_usernames, random_passwords):
-			con.execute("INSERT OR IGNORE INTO users (username, password) VALUES (?, ?)", (username, password))
+	
+	usernames = random.sample(usernames, 19)
+	passwords = random.sample(usernames, 19)
+	
+	usernames.append(next_user)
+	passwords.append(flag)
+	
+	for username, password in zip(usernames, passwords):
+		con.execute("INSERT OR IGNORE INTO users (username, password) VALUES (?, ?)", (username, password))
 		
 	con.commit()
 

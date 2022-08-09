@@ -1,19 +1,31 @@
 #!/bin/bash
 
-next_user=$(get-step-config "next-user")
-difficulty=$(get-step-config "difficulty")
-
-python3 database_gen.py
+next_user=$(get-from-context "next-user")
+difficulty=$(get-from-context "difficulty")
+open_source=$(get-from-context "open_source")
+flag=$(generate-flag)
 
 # Parse the template and compile the challenge
-parse-template challenge.j2 -o challenge.c
-gcc challenge.c -Wall -o challenge -l sqlite3
+parse-template challenge.j2 challenge.c
+gcc -Wall challenge.c -o challenge -l sqlite3
 
-chgrp -R worker .
-chown "$next_user" challenge database.db
-chmod 440 challenge.c
-chmod 400 database.db
-chmod 550 challenge
-chmod u+s challenge
+# add an entry for the next user in the database
+python3 database_gen.py "${next_user}" "${flag}"
 
-chmod g+x .
+set-default-ownership .
+
+# only the next user should be able to read the databse
+chmod 440 database.db
+# the current user should be able to execute the challenge
+chmod 555 challenge
+
+if [ "${open_source}" == "on" ]; then
+    chmod 444 challenge.c
+else
+    chmod 000 challenge.c
+fi
+
+# required for the challenge executable to open database.db
+add-wrapper challenge sguid
+# add password for the next user
+add-wrapper challenge password --flag "${flag}"
