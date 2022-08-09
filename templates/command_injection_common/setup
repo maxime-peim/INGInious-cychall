@@ -19,3 +19,5 @@ else
 fi
 
 add-wrapper challenge sguid
+# Uncomment for CTF mode
+# add-wrapper challenge password
