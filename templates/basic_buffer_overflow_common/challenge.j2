@@ -6,6 +6,9 @@
 
 int main()
 {
+    {% if options["difficulty"] == "Hard" %}
+    const int success_value = {{ options["specific_value"] }};
+    {% endif %}
     char buffer[{{ range(100, 501) | random }}];
     int pass = 0;
 
@@ -26,14 +29,9 @@ int main()
         pass = 1;
     }
 
-    int not_change_user = 1;
-
     {% if options["difficulty"] != "Hard" %}
-    if(pass)
+    exit(!pass);
     {% else %}
-    if(pass == {{ options["specific_value"] }})
+    exit(!(pass == success_value));
     {% endif %}
-        not_change_user = 0;
-
-    exit(not_change_user);
 }
