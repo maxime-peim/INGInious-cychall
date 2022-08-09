@@ -24,8 +24,13 @@ int check_blacklist(char *arr[], char* value, int length)
 
 int main(int argc, char **argv)
 {
-	char cmd[{{ options["buffer_size"] | default(30) }}] = "ping -c4 ";
-	char ip[20];
+	{% if options["buffer_size"] | int > 20 %}
+		{% set buffer_size = 20 %}
+	{% else %}
+		{% set buffer_size = options["buffer_size"] %}
+	{% endif %}
+	char cmd[{{ buffer_size + 10}}] = "ping -c4 ";
+	char ip[{{ buffer_size }}];
 	{% if options["blacklist"] %}
 	{% set blacklisted = options["blacklist"].split(",") %}
 	char *blacklist[] = { {{ blacklisted| map("to_json") | join(", ")}} };
