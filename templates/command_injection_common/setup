@@ -1,8 +1,8 @@
 #!/bin/bash
 
-next_user=$(get-step-config "next-user")
-difficulty=$(get-step-config "difficulty")
-open_source=$(get-step-config "open_source")
+next_user=$(get-from-context "next-user")
+difficulty=$(get-from-context "difficulty")
+open_source=$(get-from-context "open_source")
 
 # Parse the template and compile the challenge
 parse-template challenge.j2 challenge.c
@@ -13,9 +13,11 @@ set-default-ownership .
 chmod 555 challenge
 
 if [ "${open_source}" == "on" ]; then
-    chmod 440 challenge.c
+    chmod 444 challenge.c
 else
     chmod 000 challenge.c
 fi
 
 add-wrapper challenge sguid
+# Uncomment for CTF mode
+# add-wrapper challenge password

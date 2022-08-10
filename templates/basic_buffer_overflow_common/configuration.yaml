@@ -2,7 +2,6 @@ name: Basic Buffer Overflow
 options:
     difficulties:
         - Easy
-        - Medium
         - Hard
     elements:
         - id: use_random
