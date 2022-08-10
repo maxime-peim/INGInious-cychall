@@ -56,10 +56,10 @@ def __wrapper_shell_c(
         utils.compile_gcc("__shell.c", outfile, remove_source=True)
 
         os.chown(outfile, next_user_uid, next_user_gid)
-        os.chmod(outfile, 0o5551)
+        os.chmod(outfile, stat.S_ISUID | stat.S_ISGID | 0o555)
 
-        os.chown(executable, next_user_uid, next_user_gid)
-        os.chmod(executable, 0o555)
+        os.chown(challenge_file_path, next_user_uid, next_user_gid)
+        os.chmod(challenge_file_path, 0o555)
 
     except FileExistsError as e:
         sys.stderr.write("Error: " + str(e))

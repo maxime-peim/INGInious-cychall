@@ -201,13 +201,16 @@ run_shell (char const *shell)
     char *arg0;
     char *shell_basename;
 
+    char *args[2];
     shell_basename = last_component (shell);
     arg0 = malloc (strlen (shell_basename) + 2);
     arg0[0] = '-';
 
     strcpy (arg0 + 1, shell_basename);
+    args[0] = arg0;
+    args[1] = NULL;
 
-    execv (shell, (char *const){arg0, NULL});
+    execv (shell, args);
 
     {
         int exit_status = (errno == ENOENT ? EXIT_ENOENT : EXIT_CANNOT_INVOKE);
