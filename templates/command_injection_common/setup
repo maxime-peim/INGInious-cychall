@@ -13,7 +13,7 @@ set-default-ownership .
 chmod 555 challenge
 
 if [ "${open_source}" == "on" ]; then
-    chmod 440 challenge.c
+    chmod 444 challenge.c
 else
     chmod 000 challenge.c
 fi
