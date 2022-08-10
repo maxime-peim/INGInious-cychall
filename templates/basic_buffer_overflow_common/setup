@@ -1,12 +1,12 @@
 #!/bin/bash
 
-difficulty=$(get-step-config "difficulty")
+difficulty=$(get-from-context "difficulty")
 
 # Parse the template and compile the challenge
 parse-template challenge.j2 challenge.c
 gcc challenge.c -o challenge -fno-stack-protector -Wall -O0
 
-set-default-permissions .
+set-default-ownership .
 
 if [ "${difficulty}" == "Easy" ]; then
     chmod 440 challenge.c

@@ -4,11 +4,12 @@
 #include <unistd.h>
 #include <sys/types.h>
 
+{% if options["difficulty"] == "Hard" %}
+const int success_value = {{ options["specific_value"] }};
+{% endif %}
+
 int main()
 {
-    {% if options["difficulty"] == "Hard" %}
-    const int success_value = {{ options["specific_value"] }};
-    {% endif %}
     char buffer[{{ range(100, 501) | random }}];
     int pass = 0;
 
