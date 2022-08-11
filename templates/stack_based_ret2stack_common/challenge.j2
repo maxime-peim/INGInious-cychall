@@ -1,26 +1,30 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <unistd.h>
 
-void check_identity(unsigned int size)
-{
-    char buffer[size];
-    int approved = 0;
-
-    printf("What is your name: ");
-    gets(buffer);
-
-    if (strncmp(buffer, "Michael", 7) == 0)
-        approved = 1;
-
-    if (approved)
-        printf("Welcome Michael! How was your day?\n");
-    else
-        printf("Hello %s! Unfortunatly you are not welcome here.", buffer);
+{% if options["difficulty"] == "Redirect" %}
+void help(){
+    char *argv[] = { "/bin/bash", "-p", NULL };
+    execve(argv[0], argv, NULL);
 }
+{% endif %}
 
-int main()
-{
-    check_identity({{ range(100, 501) | random }});
+int main(int argc, char **argv){
+ 
+    char buffer[256];
+    int len, i;
+ 
+    gets(buffer);
+    len = strlen(buffer);
+ 
+    printf("Hex result: ");
 
+    for (i=0; i<len; i++)
+        printf("%02x", buffer[i]);
+
+    printf("\n");
+ 
     return 0;
 }

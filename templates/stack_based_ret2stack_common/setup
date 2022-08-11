@@ -1,15 +1,47 @@
 #!/bin/bash
 
-next_user=$(get-step-config "next-user")
-difficulty=$(get-step-config "difficulty")
+next_user=$(get-from-context "next-user")
+difficulty=$(get-from-context "difficulty")
+bits=$(get-from-context "bits")
+open_source=$(get-from-context "open_source")
+show_compilation=$(get-from-context "show_compilation")
 
 # Parse the template and compile the challenge
-parse-template challenge.j2 -o challenge.c
-gcc challenge.c -Wall -o challenge -fno-stack-protector
+parse-template challenge.j2 challenge.c
 
-# need ASLR disabled ...
-chgrp -R worker .
-chown "$next_user" challenge
-chmod 440 challenge.c
-chmod 550 challenge
-chmod u+s challenge
+options="-Wl,-z,relro,-z,now"
+
+# disable ASLR only for ret2libc
+if [[ "${difficulty}" == "Lib-C" ]]; then
+    echo 0 | sudo tee /proc/sys/kernel/randomize_va_space
+fi
+
+# add no executable stack for other cases
+if [[ "${difficulty}" != "Stack" ]]; then
+    options="${options},-z,noexecstack"
+fi
+
+# if a 32 bit executable as requested
+if [[ "${bits}" == "on" ]]; then
+    options="${options} -m32"
+fi
+
+compilation_command="gcc challenge.c -o challenge -fno-stack-protector -no-pie ${options}"
+/bin/bash -c "${compilation_command}"
+
+if [[ "${show_compilation}" == "on" ]]; then
+    echo "${compilation_command}" > README
+    chmod 444 README
+fi
+
+set-default-ownership .
+
+chmod 555 challenge
+
+if [ "${open_source}" == "on" ]; then
+    chmod 444 challenge.c
+else
+    chmod 000 challenge.c
+fi
+
+add-wrapper challenge sguid

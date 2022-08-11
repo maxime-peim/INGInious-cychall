@@ -1,41 +1,20 @@
-name: Stack Based - ret2stack
+name: Buffer Overflow - Flow control
 options:
     difficulties:
-        - Easy
-        - Medium
-        - Hard
+        - Redirect
+        - Stack
+        - Lib-C
+        - ROP
     elements:
-        - id: test
-          label: Test checkbox
+        - id: bits
+          label: 32 bit executable
+          type: checkbox
+          value: false
+        - id: open_source
+          label: Access to challenge source file
           type: checkbox
           checked: false
-          modes:
-            - Easy
-            - Medium
-        
-        - id: debug
-          label: Debug information
-          type: text
-          placeholder: sdfsdfs
-          modes:
-            - Hard
-            - Elite
-        
-        - id: select_test
-          label: test selector
-          type: select
-          default: Item 2
-          values:
-            - Item 1
-            - Item 2
-            - Item 3
-        
-        - id: radio_test
-          label: Radio buttons
-          type: radio
-          default: pp
-          buttons:
-            - id: ee
-              label: eee
-            - id: rr
-              label: eee
+        - id: show_compilation
+          label: Give the compilation command to the user
+          type: checkbox
+          checked: false
