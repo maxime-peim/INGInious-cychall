@@ -10,7 +10,7 @@ RUN   yum install -y sudo gdb gcc gcc-c++ cpp make cmake \
       clang-devel llvm automake check check-devel zlib-devel \
       openssl-devel time jansson-devel radare2 wget which \
       expat-devel gmp-devel mpfr-devel git dnf nano binutils \
-      sqlite sqlite-devel strace && \
+      sqlite sqlite-devel strace glibc-devel.i686 checksec && \
       yum clean all
 
 # RUN   python3 -m pip install --no-cache-dir --upgrade pwntools
