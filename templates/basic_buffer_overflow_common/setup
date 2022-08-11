@@ -4,7 +4,7 @@ difficulty=$(get-from-context "difficulty")
 
 # Parse the template and compile the challenge
 parse-template challenge.j2 challenge.c
-gcc challenge.c -o challenge -fno-stack-protector -Wall -O0
+gcc challenge.c -o challenge -fno-stack-protector -no-pie -z,now,-z,noexecstack,-z,norelro
 
 set-default-ownership .
 
