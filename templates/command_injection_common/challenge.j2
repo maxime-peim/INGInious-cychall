@@ -27,7 +27,7 @@ int main(int argc, char **argv)
 	{% if options["buffer_size"] | int > 20 %}
 		{% set buffer_size = 20 %}
 	{% else %}
-		{% set buffer_size = options["buffer_size"] %}
+		{% set buffer_size = options["buffer_size"] | int %}
 	{% endif %}
 	char cmd[{{ buffer_size + 10}}] = "ping -c4 ";
 	char ip[{{ buffer_size }}];

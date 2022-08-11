@@ -6,7 +6,7 @@ open_source=$(get-from-context "open_source")
 
 # Parse the template and compile the challenge
 parse-template challenge.j2 challenge.c
-gcc -Wall challenge.c -o challenge
+gcc challenge.c -o challenge -fstack-protector-all -z,now,-z,noexecstack,-z,relro
 
 set-default-ownership .
 
