@@ -14,7 +14,3 @@ options:
           label: Access to challenge source file
           type: checkbox
           checked: false
-        - id: show_compilation
-          label: Give the compilation command to the user
-          type: checkbox
-          checked: false

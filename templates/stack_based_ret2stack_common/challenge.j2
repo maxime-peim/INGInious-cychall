@@ -6,6 +6,8 @@
 
 {% if options["difficulty"] == "Redirect" %}
 void help(){
+    setreuid(geteuid(), geteuid());
+    setregid(getegid(), getegid());
     char *argv[] = { "/bin/bash", "-p", NULL };
     execve(argv[0], argv, NULL);
 }
