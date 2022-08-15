@@ -1,6 +1,0 @@
-#!/bin/bash
-
-chown end challenge
-chmod 000 challenge.c
-chmod 550 challenge
-chmod u+s challenge

